@@ -139,7 +139,7 @@ Dane leżą w PostgreSQL, w nazwanym wolumenie Dockera `finbro-pgdata` (system p
 `docker-compose.yml` z trzema usługami:
 ```
 services:
-  db       image: postgres:<wersja główna>    port "127.0.0.1:5432:5432"   wolumen finbro-pgdata:/var/lib/postgresql/data
+  db       image: postgres:<wersja główna>    port "127.0.0.1:5432:5432"   wolumen finbro-pgdata:/var/lib/postgresql (od PG 18 dane są w podkatalogu wersji)
            env z .env (POSTGRES_USER/PASSWORD/DB), healthcheck: pg_isready
            skrypt init tworzy dodatkowo bazę finbro_test
   app      build: .                           port "127.0.0.1:8000:8000"

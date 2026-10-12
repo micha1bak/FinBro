@@ -1,0 +1,28 @@
+name: finbro
+
+services:
+  db:
+    # Wersja główna przypięta jawnie: zmiana wymaga pg_dump/pg_restore (README).
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Ustaw POSTGRES_USER w pliku .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Ustaw POSTGRES_PASSWORD w pliku .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Ustaw POSTGRES_DB w pliku .env}
+    ports:
+      # Tylko loopback hosta: baza nie jest osiągalna z sieci.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Od PostgreSQL 18 obraz trzyma dane w /var/lib/postgresql/<wersja>/docker,
+      # więc wolumen montujemy w /var/lib/postgresql (a nie w .../data).
+      - finbro-pgdata:/var/lib/postgresql
+      - ./docker/db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  finbro-pgdata:
+    name: finbro-pgdata
