@@ -1,0 +1,45 @@
+"""Fabryka aplikacji FastAPI.
+
+Uruchomienie: ``uvicorn finbro.web.app:create_app --factory``.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from finbro.config import Settings, load_dotenv
+from finbro.db.session import make_engine, make_session_factory, ping
+
+WEB_DIR = Path(__file__).parent
+templates = Jinja2Templates(directory=WEB_DIR / "templates")
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    if settings is None:
+        load_dotenv()
+        settings = Settings.from_env()
+
+    engine = make_engine(settings.database_url)
+
+    app = FastAPI(title="FinBro", docs_url=None, redoc_url=None)
+    app.state.settings = settings
+    app.state.engine = engine
+    app.state.session_factory = make_session_factory(engine)
+    app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
+
+    @app.get("/", response_class=HTMLResponse)
+    def index(request: Request) -> HTMLResponse:
+        return templates.TemplateResponse(request, "index.html")
+
+    @app.get("/health")
+    def health() -> JSONResponse:
+        if ping(engine):
+            return JSONResponse({"status": "ok", "database": "ok"})
+        return JSONResponse({"status": "error", "database": "unavailable"}, status_code=503)
+
+    return app
