@@ -4,7 +4,14 @@ from itertools import count
 from finbro.domain.enums import TransferKind, TxSource, TxType
 from finbro.domain.money import Money
 from finbro.domain.periods import IsoWeek, Month, periods_ending_at
-from finbro.domain.reporting import expenses_by_category, totals, trend
+from finbro.domain.reporting import (
+    category_breakdown,
+    expenses_by_category,
+    incomplete,
+    top_counterparties,
+    totals,
+    trend,
+)
 from finbro.domain.transactions import Classification, Transaction, TransactionData
 
 T41 = IsoWeek(2026, 41)
@@ -98,3 +105,49 @@ def test_trend_ends_with_selected_period():
         (Money.zero(), M("40.00")),
         (M("100.00"), Money.zero()),
     ]
+
+
+def test_category_breakdown_with_shares():
+    txs = [
+        tx("-100.00", TxType.WYDATEK, category_id=GROCERIES),
+        tx("-50.00", TxType.WYDATEK, category_id=GROCERIES),
+        tx("-50.00", TxType.WYDATEK, category_id=3),
+    ]
+    shares = category_breakdown(txs, T41)
+    assert [(s.category_id, s.amount, s.percent) for s in shares] == [
+        (GROCERIES, M("150.00"), "75%"),
+        (3, M("50.00"), "25%"),
+    ]
+
+
+def test_category_share_rounding():
+    txs = [tx("-1.00", TxType.WYDATEK, category_id=1), tx("-2.00", TxType.WYDATEK, category_id=2)]
+    assert [s.percent for s in category_breakdown(txs, T41)] == ["66,67%", "33,33%"]
+
+
+def test_system_cash_category_is_included():
+    txs = [tx("-560.00", TxType.WYDATEK, source=TxSource.INVENTORY, category_id=CASH)]
+    assert [(s.category_id, s.percent) for s in category_breakdown(txs, T41)] == [(CASH, "100%")]
+
+
+def test_top_merchants():
+    txs = [
+        tx("-54.30", TxType.WYDATEK, category_id=1, merchant="JMP S.A. BIEDRONKA 2422"),
+        tx("-88.10", TxType.WYDATEK, category_id=1, merchant="JMP S.A. BIEDRONKA 2422", day=date(2026, 10, 9)),
+        tx("-120.45", TxType.WYDATEK, category_id=2, merchant="RESTAURACJA POD TESTEM"),
+        tx("-7.00", TxType.WYDATEK, category_id=1, merchant="ZABKA Z8627 K.1"),
+        tx("-2300.00", TxType.TRANSFER, merchant="BANKOMAT"),  # nie jest wydatkiem
+    ]
+    ranking = top_counterparties(txs, Month(2026, 10))
+    assert [(c.name, c.amount, c.count) for c in ranking] == [
+        ("JMP S.A. BIEDRONKA 2422", M("142.40"), 2),
+        ("RESTAURACJA POD TESTEM", M("120.45"), 1),
+        ("ZABKA Z8627 K.1", M("7.00"), 1),
+    ]
+
+
+def test_incomplete_items_are_reported_but_not_counted():
+    txs = [tx("+705.87", TxType.DOCHOD), tx("+477.08", TxType.DOCHOD, confirmed=False)]
+    info = incomplete(txs, T41)
+    assert (info.count, info.total) == (1, M("477.08"))
+    assert totals(txs, T41).income == M("705.87")
