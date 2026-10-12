@@ -1,26 +1,86 @@
-"""Wspólne fixture'y testów FinBro."""
+"""Wspólne fixture'y testów FinBro.
+
+Testy domeny nie potrzebują bazy. Testy integracyjne działają na prawdziwym
+PostgreSQL w bazie ``finbro_test``: schemat powstaje migracjami raz na sesję,
+a każdy test działa w transakcji wycofywanej na końcu (D11).
+"""
 
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from sqlalchemy import Connection, Engine, text
+from sqlalchemy.orm import Session, sessionmaker
 
 from finbro.config import load_dotenv
+from finbro.db import migrate
+from finbro.db.session import make_engine, ping
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 load_dotenv(PROJECT_ROOT / ".env")
+
+DB_HINT = (
+    "Uruchom bazę poleceniem: docker compose up -d db "
+    "(a przy pierwszym uruchomieniu skopiuj .env.example do .env i ustaw hasło)."
+)
+
+
+def require_database(engine: Engine) -> None:
+    """Przerywa testy czytelnym komunikatem, gdy baza testowa jest nieosiągalna."""
+    if not ping(engine):
+        pytest.fail(
+            f"Baza testowa jest nieosiągalna ({engine.url.render_as_string(hide_password=True)}). {DB_HINT}",
+            pytrace=False,
+        )
 
 
 @pytest.fixture(scope="session")
 def test_database_url() -> str:
     url = os.environ.get("TEST_DATABASE_URL", "").strip()
     if not url:
-        pytest.fail(
-            "Brak zmiennej TEST_DATABASE_URL. Skopiuj .env.example do .env, "
-            "ustaw hasło i uruchom bazę: docker compose up -d db",
-            pytrace=False,
-        )
+        pytest.fail(f"Brak zmiennej TEST_DATABASE_URL. {DB_HINT}", pytrace=False)
     return url
+
+
+@pytest.fixture(scope="session")
+def db_engine(test_database_url: str) -> Iterator[Engine]:
+    engine = make_engine(test_database_url)
+    require_database(engine)
+    # Czysty schemat w każdej sesji testów, tworzony migracjami (testuje je przy okazji).
+    with engine.begin() as conn:
+        conn.execute(text("DROP SCHEMA public CASCADE"))
+        conn.execute(text("CREATE SCHEMA public"))
+    migrate.upgrade(test_database_url)
+    yield engine
+    engine.dispose()
+
+
+@pytest.fixture
+def db_connection(db_engine: Engine) -> Iterator[Connection]:
+    """Połączenie z otwartą transakcją, wycofywaną po teście."""
+    with db_engine.connect() as conn:
+        outer = conn.begin()
+        try:
+            yield conn
+        finally:
+            if outer.is_active:
+                outer.rollback()
+
+
+@pytest.fixture
+def session_factory(db_connection: Connection) -> sessionmaker[Session]:
+    """Fabryka sesji w transakcji testu: commit w kodzie zamyka tylko savepoint."""
+    return sessionmaker(bind=db_connection, join_transaction_mode="create_savepoint", expire_on_commit=False)
+
+
+@pytest.fixture
+def db_session(session_factory: sessionmaker[Session]) -> Iterator[Session]:
+    session = session_factory()
+    try:
+        yield session
+    finally:
+        session.close()

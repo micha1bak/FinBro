@@ -11,7 +11,7 @@ from finbro.db.models import Base
 
 
 @pytest.fixture
-def scratch_database_url(test_database_url):
+def scratch_database_url(db_engine, test_database_url):
     """Tworzy pustą bazę na czas testu i usuwa ją po nim."""
     name = f"finbro_mig_{uuid.uuid4().hex[:8]}"
     admin_engine = create_engine(test_database_url, isolation_level="AUTOCOMMIT")

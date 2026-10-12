@@ -34,6 +34,7 @@ finbro = ["web/templates/**/*", "web/static/**/*", "db/migrations/**/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-ra --import-mode=importlib"
 filterwarnings = [
     # Starlette 1.7 zaleca pakiet httpx2 dla TestClient; zostajemy przy httpx.

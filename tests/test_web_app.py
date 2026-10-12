@@ -6,14 +6,14 @@ from finbro.web.app import create_app
 UNREACHABLE_DATABASE_URL = "postgresql+psycopg://finbro:x@127.0.0.1:1/finbro"
 
 
-def test_index_page(test_database_url):
+def test_index_page(db_engine, test_database_url):
     client = TestClient(create_app(Settings(database_url=test_database_url)))
     response = client.get("/")
     assert response.status_code == 200
     assert "FinBro" in response.text
 
 
-def test_health_ok_with_database(test_database_url):
+def test_health_ok_with_database(db_engine, test_database_url):
     client = TestClient(create_app(Settings(database_url=test_database_url)))
     response = client.get("/health")
     assert response.status_code == 200
