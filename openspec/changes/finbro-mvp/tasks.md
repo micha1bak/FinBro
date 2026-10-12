@@ -75,7 +75,7 @@
 
 - [x] 10.1 Zaimplementować w domenie agregacje przychodów i wydatków według definicji ze spec `financial-reporting` (typy neutralne wykluczone, ZWROT i ROZLICZENIE pomniejszają kategorię, darowania i różnice inwentaryzacji wliczone, data transakcji jako wiążąca). Weryfikacja: testy jednostkowe scenariuszy "refundacja i spłata nie są przychodem", "odkładanie nie jest wydatkiem" i "rozliczenie wspólnego wydatku".
 - [x] 10.2 Zaimplementować podziały na kategorie (kwota i udział %) i ranking sprzedawców oraz kontrahentów, a także informację o pozycjach niezatwierdzonych lub nieskategoryzowanych w okresie. Weryfikacja: testy dla 150/50 zł → 75%/25% i dla komunikatu o 1 niezatwierdzonej pozycji na 477,08 zł.
-- [ ] 10.3 Dodać widok raportów: przełącznik tydzień, miesiąc lub rok, nawigacja między okresami, podsumowanie (przychody, wydatki, bilans), wykres trendu (Chart.js), tabela kategorii i ranking sprzedawców. Weryfikacja: test `TestClient` zwraca poprawne sumy dla danych testowych, a ręczne sprawdzenie w przeglądarce pokazuje wykres.
+- [x] 10.3 Dodać widok raportów: przełącznik tydzień, miesiąc lub rok, nawigacja między okresami, podsumowanie (przychody, wydatki, bilans), wykres trendu (Chart.js), tabela kategorii i ranking sprzedawców. Weryfikacja: test `TestClient` zwraca poprawne sumy dla danych testowych, a ręczne sprawdzenie w przeglądarce pokazuje wykres.
 
 ## 11. Integracja end-to-end
 

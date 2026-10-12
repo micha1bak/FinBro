@@ -17,7 +17,7 @@ from finbro.config import Settings, load_dotenv
 from finbro.db.session import make_engine, make_session_factory, ping
 from finbro.services.llm_jobs import LlmJobService, ollama_factory
 from finbro.web.admin import setup_admin
-from finbro.web.routes import imports, inbox, receivables, settlement, transactions, wallet
+from finbro.web.routes import imports, inbox, receivables, reports, settlement, transactions, wallet
 from finbro.web.templating import WEB_DIR, templates
 from finbro.web.worker import LlmWorker
 
@@ -64,6 +64,7 @@ def create_app(
     app.include_router(wallet.router)
     app.include_router(receivables.router)
     app.include_router(settlement.router)
+    app.include_router(reports.router)
 
     @app.middleware("http")
     async def limit_upload_size(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

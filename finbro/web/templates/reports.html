@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Raporty – FinBro{% endblock %}
+{% block head %}<script src="{{ url_for('static', path='vendor/chart-4.5.1.umd.min.js') }}" defer></script>{% endblock %}
+{% block content %}
+{% set period = report.period %}
+<h1>Raport: {{ period.title }}</h1>
+
+<nav class="week-nav">
+  {% for k, label in kinds.items() %}
+    {% if k == kind %}<strong>{{ label }}</strong>{% else %}<a href="/reports?kind={{ k.value }}">{{ label }}</a>{% endif %}
+  {% endfor %}
+  <span class="muted">|</span>
+  <a href="/reports?kind={{ kind.value }}&period={{ period.prev().label }}">← {{ period.prev().label }}</a>
+  <a href="/reports?kind={{ kind.value }}&period={{ period.next().label }}">{{ period.next().label }} →</a>
+</nav>
+
+{% if report.incomplete.count %}
+<div class="notice warn" id="incomplete">
+  Niepełne dane: pozycje niezatwierdzone lub bez klasyfikacji: <strong>{{ report.incomplete.count }}</strong>
+  na łączną kwotę {{ report.incomplete.total|money }}. Nie są wliczone do sum.
+  <a href="/inbox">Przejdź do skrzynki</a>.
+</div>
+{% endif %}
+
+<div class="cards">
+  <div class="card"><div class="muted">Przychody</div><div class="value" id="sum-income">{{ report.totals.income|money }}</div></div>
+  <div class="card"><div class="muted">Wydatki</div><div class="value" id="sum-expenses">{{ report.totals.expenses|money }}</div></div>
+  <div class="card"><div class="muted">Bilans</div><div class="value" id="sum-balance">{{ report.totals.balance|money(plus=True) }}</div></div>
+</div>
+
+<h2>Trend</h2>
+<div class="panel"><canvas id="trend-chart" height="110" aria-label="Przychody i wydatki w kolejnych okresach"></canvas></div>
+<script type="application/json" id="trend-data">{{ chart_json|safe }}</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof Chart === "undefined") { return; }
+    const data = JSON.parse(document.getElementById("trend-data").textContent);
+    const zl = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" });
+    new Chart(document.getElementById("trend-chart"), {
+      type: "bar",
+      data: {
+        labels: data.labels,
+        datasets: [
+          { label: "Przychody", data: data.income, backgroundColor: "#1f6f5c" },
+          { label: "Wydatki", data: data.expenses, backgroundColor: "#c2683a" },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: { y: { ticks: { callback: (v) => zl.format(v) } } },
+        plugins: { tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ": " + zl.format(ctx.parsed.y) } } },
+      },
+    });
+  });
+</script>
+
+<div class="forms-grid">
+  <section>
+    <h2>Wydatki według kategorii</h2>
+    {% if report.categories %}
+    <table id="categories">
+      <thead><tr><th>Kategoria</th><th class="num">Kwota</th><th class="num">Udział</th></tr></thead>
+      <tbody>
+      {% for c in report.categories %}
+        <tr><td>{{ category_names.get(c.category_id, "bez kategorii") }}</td><td class="num">{{ c.amount|money }}</td><td class="num">{{ c.percent }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">Brak wydatków w tym okresie.</p>{% endif %}
+  </section>
+  <section>
+    <h2>Sprzedawcy i kontrahenci</h2>
+    {% if report.counterparties %}
+    <table id="counterparties">
+      <thead><tr><th>Nazwa</th><th class="num">Wydatki</th><th class="num">Liczba</th></tr></thead>
+      <tbody>
+      {% for c in report.counterparties %}
+        <tr><td>{{ c.name }}</td><td class="num">{{ c.amount|money }}</td><td class="num">{{ c.count }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">Brak wydatków w tym okresie.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}
