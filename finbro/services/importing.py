@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from finbro.domain.accounts import account_matches
+from finbro.domain.coverage import DateRange, coverage_gaps
 from finbro.domain.enums import TxSource
 from finbro.domain.transactions import TransactionData
 from finbro.importers.pko_xml import ImportFormatError, ParsedOperation, ParsedStatement, parse_statement
@@ -117,3 +118,11 @@ class ImportService:
 
     def after_import(self, result: ImportResult) -> None:
         """Miejsce na kroki po zapisie w tej samej transakcji (klasyfikacja nowych transakcji)."""
+
+    def covered_ranges(self) -> list[DateRange]:
+        account = self.uow.reference.account(MAIN_ACCOUNT_CODE)
+        return [DateRange(b.date_from, b.date_to) for b in self.uow.imports.batches(account.id)]
+
+    def coverage_gaps(self) -> list[DateRange]:
+        """Okresy bez pokrycia importami między datą startu a ostatnim importem."""
+        return coverage_gaps(self.covered_ranges(), self.uow.reference.config().start_date)
