@@ -6,6 +6,7 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import date
 
+from finbro.classification.pipeline import ClassificationPipeline
 from finbro.domain.accounts import account_matches
 from finbro.domain.coverage import DateRange, coverage_gaps
 from finbro.domain.enums import TxSource
@@ -117,7 +118,8 @@ class ImportService:
         )
 
     def after_import(self, result: ImportResult) -> None:
-        """Miejsce na kroki po zapisie w tej samej transakcji (klasyfikacja nowych transakcji)."""
+        """Klasyfikacja nowych transakcji w tej samej transakcji bazodanowej co zapis importu."""
+        ClassificationPipeline(self.uow).classify(result.new_transaction_ids)
 
     def covered_ranges(self) -> list[DateRange]:
         account = self.uow.reference.account(MAIN_ACCOUNT_CODE)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from finbro.domain.enums import TransferKind, TxType
+from finbro.domain.enums import ProposalSource, TransferKind, TxType
 from finbro.domain.reference import Category
 from finbro.domain.transactions import Classification, Direction
 
@@ -74,6 +74,25 @@ def normalized(classification: Classification) -> Classification:
         transfer_kind=(classification.transfer_kind or TransferKind.OTHER) if t is TxType.TRANSFER else None,
         envelope_id=classification.envelope_id if t is TxType.ODKLADANIE else None,
     )
+
+
+def is_auto_accepted(direction: Direction, proposal: Classification) -> bool:
+    """Reguły akceptacji z D9.
+
+    DOCHÓD zawsze wymaga zatwierdzenia. Propozycje dla wydatków są przyjmowane
+    automatycznie z każdego źródła. Wpływy innego typu niż DOCHÓD są przyjmowane
+    automatycznie tylko wtedy, gdy pochodzą z reguły; z historii i od modelu trafiają do skrzynki.
+    Propozycja niespełniająca wymagań typu (np. bez kategorii) nigdy nie jest przyjmowana.
+    """
+    if proposal.type is None or proposal.type is TxType.DOCHOD:
+        return False
+    try:
+        check_classification(direction, proposal)
+    except ClassificationError:
+        return False
+    if direction is Direction.OUT:
+        return True
+    return proposal.source is ProposalSource.RULE
 
 
 def check_classification(direction: Direction, classification: Classification) -> None:
