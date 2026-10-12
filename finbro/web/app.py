@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from finbro.config import Settings, load_dotenv
 from finbro.db.session import make_engine, make_session_factory, ping
 from finbro.web.admin import setup_admin
-from finbro.web.routes import imports
+from finbro.web.routes import imports, inbox
 from finbro.web.templating import WEB_DIR, templates
 
 
@@ -34,6 +34,7 @@ def create_app(settings: Settings | None = None, session_factory: Callable[..., 
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
     setup_admin(app, engine, app.state.session_factory)
     app.include_router(imports.router)
+    app.include_router(inbox.router)
 
     @app.middleware("http")
     async def limit_upload_size(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:

@@ -157,6 +157,18 @@ class TransactionRepository:
                 return row_to_domain(row)
         return None
 
+    def unconfirmed(self) -> list[Transaction]:
+        """Transakcje czekające na decyzję: bez klasyfikacji albo z niezatwierdzoną propozycją."""
+        tx, cl = models.Transaction, models.Classification
+        stmt = (
+            select(tx)
+            .outerjoin(cl, cl.transaction_id == tx.id)
+            .where(or_(cl.transaction_id.is_(None), cl.confirmed.is_(False)))
+            .options(selectinload(tx.classification))
+            .order_by(tx.transaction_date, tx.id)
+        )
+        return [row_to_domain(r) for r in self.session.scalars(stmt)]
+
     def set_classification(self, transaction_id: int, classification: Classification) -> Transaction:
         self._write_classification(transaction_id, classification)
         return self.get(transaction_id)

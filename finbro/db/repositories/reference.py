@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from finbro.db import models
@@ -127,6 +127,10 @@ class ReferenceRepository:
         if row is None:
             raise LookupError(f"Brak dłużnika {debtor_id}")
         return _debtor(row)
+
+    def debtor_by_name(self, name: str) -> Debtor | None:
+        row = self.session.scalar(select(models.Debtor).where(func.lower(models.Debtor.name) == name.strip().lower()))
+        return _debtor(row) if row is not None else None
 
     def add_debtor(self, name: str) -> Debtor:
         row = models.Debtor(name=name)

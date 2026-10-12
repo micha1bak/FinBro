@@ -1,0 +1,44 @@
+{% set c = tx.classification %}
+<tr id="tx-{{ tx.id }}" class="inbox-row">
+  <td>
+    {{ tx.transaction_date.isoformat() }}
+    <div class="muted">{{ tx.data.bank_type or tx.data.source.value|lower }}</div>
+  </td>
+  <td>
+    <strong>{{ tx.counterparty or "—" }}</strong>
+    {% if tx.data.title %}<div class="muted">{{ tx.data.title }}</div>{% endif %}
+    {% if tx.data.note %}<div class="muted">{{ tx.data.note }}</div>{% endif %}
+  </td>
+  <td class="num">{{ tx.amount|money(plus=True) }}</td>
+  <td class="proposal">
+    {% if c.type %}
+      <strong>{{ c.type.label }}</strong>
+      {% if c.category_id %} · {{ categories_by_id[c.category_id].name }}{% endif %}
+      {% if c.debtor_id %} · {{ debtors_by_id[c.debtor_id].name }}{% endif %}
+      {% if c.transfer_kind %} · {{ c.transfer_kind.label }}{% endif %}
+      <div class="muted">źródło: {{ c.source.label if c.source else "—" }}{% if c.reason %} · {{ c.reason }}{% endif %}</div>
+    {% elif tx.id in queued_ids %}
+      <span class="muted" data-llm-pending>czeka na propozycję modelu językowego…</span>
+    {% else %}
+      <span class="muted">brak propozycji</span>
+    {% endif %}
+    {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+  </td>
+  <td class="actions">
+    {% if c.type %}
+    <form class="inline" method="post" action="/inbox/{{ tx.id }}/accept"
+          hx-post="/inbox/{{ tx.id }}/accept" hx-target="#tx-{{ tx.id }}" hx-swap="outerHTML">
+      <button type="submit">Przyjmij</button>
+    </form>
+    {% endif %}
+    <details{% if error %} open{% endif %}>
+      <summary>Zmień</summary>
+      <form method="post" action="/inbox/{{ tx.id }}/decide"
+            hx-post="/inbox/{{ tx.id }}/decide" hx-target="#tx-{{ tx.id }}" hx-swap="outerHTML">
+        {% include "_classification_fields.html" %}
+        <label><input type="checkbox" name="remember"> zapamiętaj jako regułę dla tego kontrahenta</label>
+        <button type="submit">Zapisz</button>
+      </form>
+    </details>
+  </td>
+</tr>

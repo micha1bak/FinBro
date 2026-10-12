@@ -1,0 +1,44 @@
+{% set c = tx.classification %}
+<label>Typ
+  <select name="type" required>
+    <option value="">—</option>
+    {% for t in types_for(tx.direction) %}
+    <option value="{{ t.value }}"{% if c.type == t %} selected{% endif %}>{{ t.label }}</option>
+    {% endfor %}
+  </select>
+</label>
+<label>Kategoria
+  <select name="category_id">
+    <option value="">—</option>
+    {% for cat in selectable_categories %}
+    <option value="{{ cat.id }}"{% if c.category_id == cat.id %} selected{% endif %}>{{ cat.name }}</option>
+    {% endfor %}
+  </select>
+</label>
+<label>Dłużnik
+  <select name="debtor_id">
+    <option value="">—</option>
+    {% for d in debtors %}
+    <option value="{{ d.id }}"{% if c.debtor_id == d.id %} selected{% endif %}>{{ d.name }}</option>
+    {% endfor %}
+  </select>
+</label>
+<label>albo nowy dłużnik <input type="text" name="new_debtor_name" size="14"></label>
+<label>Transfer
+  <select name="transfer_kind">
+    <option value="">—</option>
+    {% for k in transfer_kinds %}
+    <option value="{{ k.value }}"{% if c.transfer_kind == k %} selected{% endif %}>{{ k.label }}</option>
+    {% endfor %}
+  </select>
+</label>
+{% if tx.direction.value == "OUT" %}
+<label>Koperta (odkładanie)
+  <select name="envelope_id">
+    <option value="">—</option>
+    {% for e in envelopes %}
+    <option value="{{ e.id }}"{% if c.envelope_id == e.id %} selected{% endif %}>{{ e.name }}</option>
+    {% endfor %}
+  </select>
+</label>
+{% endif %}

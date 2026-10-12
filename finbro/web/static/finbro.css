@@ -62,3 +62,9 @@ button.secondary { background: #fff; color: var(--fg); border: 1px solid var(--l
 .card .value { font-size: 1.3rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 code.copy { background: #fff; border: 1px solid var(--line); padding: 0.1rem 0.35rem; user-select: all; }
+
+table.inbox td.actions { width: 17rem; }
+table.inbox td.actions details form label { display: block; margin: 0.3rem 0; }
+table.inbox td.actions select, table.inbox td.actions input[type="text"] { width: 100%; max-width: 16rem; }
+table.inbox td.actions summary { cursor: pointer; color: var(--accent); }
+table.inbox td.actions form.inline { margin-bottom: 0.3rem; }
