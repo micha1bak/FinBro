@@ -35,7 +35,7 @@
 
 ## 5. Klasyfikacja: typy, kategorie, reguły, historia, skrzynka
 
-- [ ] 5.1 Zaimplementować w domenie typy transakcji z dozwolonymi kierunkami i wymaganiami (kategoria dla WYDATEK/ZWROT/ROZLICZENIE, dłużnik dla POŻYCZKA/SPŁATA). Weryfikacja: testy odrzucenia DOCHODU dla wydatku i braku kategorii dla WYDATKU.
+- [x] 5.1 Zaimplementować w domenie typy transakcji z dozwolonymi kierunkami i wymaganiami (kategoria dla WYDATEK/ZWROT/ROZLICZENIE, dłużnik dla POŻYCZKA/SPŁATA). Weryfikacja: testy odrzucenia DOCHODU dla wydatku i braku kategorii dla WYDATKU.
 - [ ] 5.2 Zaimplementować silnik reguł (warunki: kierunek, typ banku, kontrahent, rachunek, tytuł, sprzedawca, zakres kwot; priorytet; pierwsza pasująca wygrywa). Weryfikacja: testy jednostkowe reguł startowych na operacjach z fixture'ów (bankomat → TRANSFER Portfela, Revolut kartą → TRANSFER budżet, tytuł FinBro → ODKŁADANIE).
 - [ ] 5.3 Zaimplementować podpowiedź z historii kontrahenta (D9, krok 2). Weryfikacja: test, w którym druga płatność u tego samego sprzedawcy dostaje kategorię z pierwszej zatwierdzonej.
 - [ ] 5.4 Zaimplementować potok po imporcie: reguły → historia → `LlmJob`, z regułami akceptacji z D9 (DOCHÓD zawsze niezatwierdzony, wydatki przyjmowane automatycznie, neutralne wpływy z reguł przyjmowane automatycznie). Weryfikacja: test integracyjny importu fixture'a sprawdza statusy `confirmed` i źródła propozycji dla każdej transakcji oraz to, że żadna transakcja z reguł nie trafiła do kolejki LLM.
