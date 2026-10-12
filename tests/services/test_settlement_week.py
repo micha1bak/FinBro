@@ -3,7 +3,7 @@ from datetime import date
 from finbro.domain.enums import SettlementStatus, TxSource, TxType
 from finbro.domain.money import Money
 from finbro.domain.periods import IsoWeek
-from finbro.domain.settlement import Settlement
+from finbro.domain.settlement import CLOSED_STATUSES, Settlement
 from finbro.domain.transactions import TransactionData
 from finbro.services.classification import ClassificationService, Decision
 from finbro.services.wallet import WalletService
@@ -38,7 +38,7 @@ def test_late_approved_income_goes_to_next_open_week_as_correction(uow):
     close(uow, T41)
     confirmed = confirm_income(uow, tx)
     assert confirmed.classification.settlement_week == T42.start
-    assert uow.settlements.get(T41).status is SettlementStatus.CLOSED  # T41 się nie zmienia
+    assert uow.settlements.get(T41).status in CLOSED_STATUSES  # T41 się nie zmienia
     assert uow.settlements.get(T41).lines == ()
 
 

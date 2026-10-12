@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
@@ -12,6 +13,7 @@ from finbro.domain.allocation import AllocationPlan, plan_for_date
 from finbro.domain.enums import SettlementStatus
 from finbro.domain.money import Money
 from finbro.domain.periods import IsoWeek
+from finbro.domain.text import fold
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,31 @@ def nearest_open_week(week: IsoWeek, closed: Collection[IsoWeek]) -> IsoWeek:
     while week in closed:
         week = week.next()
     return week
+
+
+# Tytuł przelewu (D8), dopasowywany na tekście po ``fold``: bez wielkości liter, polskich znaków i nadmiarowych spacji.
+_TITLE_RE = re.compile(r"finbro (\d{4}) ?- ?t ?(\d{1,2}) (\S+)")
+
+
+def transfer_title(week: IsoWeek, envelope_name: str) -> str:
+    return f"FinBro {week.label} {envelope_name}"
+
+
+def parse_transfer_title(title: str | None) -> tuple[IsoWeek, str] | None:
+    """``FinBro 2026-T41 Wakacje`` -> (2026-T41, "wakacje")."""
+    match = _TITLE_RE.search(fold(title))
+    if match is None:
+        return None
+    try:
+        week = IsoWeek(int(match.group(1)), int(match.group(2)))
+    except ValueError:
+        return None
+    return week, match.group(3)
+
+
+def envelope_word_matches(word: str, envelope_name: str) -> bool:
+    folded = fold(envelope_name).split()
+    return bool(folded) and folded[0] == word
 
 
 def is_settled_income_date(income_date: date, start_date: date | None) -> bool:

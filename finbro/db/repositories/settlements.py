@@ -140,3 +140,35 @@ class SettlementRepository:
             )
         )
         return {line_id: Money(int(total)) for line_id, total in rows}
+
+    def add_payment(self, line_id: int, transaction_id: int, amount: Money) -> None:
+        self.session.add(
+            models.SettlementPayment(settlement_line_id=line_id, transaction_id=transaction_id, amount=amount.grosze)
+        )
+        self.session.flush()
+
+    def payment_line_for(self, transaction_id: int) -> int | None:
+        return self.session.scalar(
+            select(models.SettlementPayment.settlement_line_id).where(
+                models.SettlementPayment.transaction_id == transaction_id
+            )
+        )
+
+    def remove_payment(self, transaction_id: int) -> None:
+        row = self.session.scalar(
+            select(models.SettlementPayment).where(models.SettlementPayment.transaction_id == transaction_id)
+        )
+        if row is not None:
+            self.session.delete(row)
+            self.session.flush()
+
+    def payments_by_line(self) -> dict[int, list[int]]:
+        """Id transakcji przypisanych do każdej linii rozliczenia."""
+        result: dict[int, list[int]] = {}
+        for line_id, tx_id in self.session.execute(
+            select(models.SettlementPayment.settlement_line_id, models.SettlementPayment.transaction_id).order_by(
+                models.SettlementPayment.id
+            )
+        ):
+            result.setdefault(line_id, []).append(tx_id)
+        return result

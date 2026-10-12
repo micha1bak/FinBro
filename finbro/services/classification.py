@@ -94,6 +94,7 @@ class ClassificationService:
         final = self.before_confirm(tx, final)
         updated = self.uow.transactions.set_classification(tx.id, final)
         self.uow.llm_jobs.cancel(tx.id)
+        SettlementService(self.uow).sync_payment(updated)
         return updated
 
     def before_confirm(self, tx: Transaction, final: Classification) -> Classification:

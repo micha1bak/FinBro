@@ -6,7 +6,8 @@ from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime
 
 from finbro.domain.coverage import DateRange, uncovered
-from finbro.domain.enums import SettlementStatus, TxType
+from finbro.domain.accounts import same_account
+from finbro.domain.enums import ProposalSource, SettlementStatus, TxType
 from finbro.domain.money import Money
 from finbro.domain.periods import IsoWeek
 from finbro.domain.reference import Envelope
@@ -19,8 +20,11 @@ from finbro.domain.settlement import (
     SettlementLine,
     carryover_before,
     compute_lines,
+    envelope_word_matches,
     is_settled_income_date,
     line_state,
+    parse_transfer_title,
+    settlement_status,
 )
 from finbro.domain.transactions import Classification, Direction, Transaction
 from finbro.services.uow import UnitOfWork
@@ -212,4 +216,105 @@ class SettlementService:
         return self.compute(week)
 
     def after_close(self, week: IsoWeek) -> None:
-        """Kroki po zamknięciu w tej samej transakcji (dopasowanie przelewów, statusy)."""
+        """Po zamknięciu: przypisanie wcześniej nieprzypisanych przelewów i odświeżenie statusów."""
+        for tx in self.uow.transactions.unassigned_savings():
+            self.sync_payment(tx, refresh=False)
+        self.refresh_statuses()
+
+    # --- przelewy na koperty ---
+
+    def _savings_envelopes(self) -> list[Envelope]:
+        return [e for e in self.uow.reference.envelopes() if not e.is_life]
+
+    def detect_envelope(self, tx: Transaction) -> tuple[Envelope, str] | None:
+        """Koperta przelewu: z tytułu FinBro albo z rachunku docelowego koperty (D8)."""
+        if tx.direction is not Direction.OUT:
+            return None
+        envelopes = self._savings_envelopes()
+        parsed = parse_transfer_title(tx.data.title)
+        if parsed is not None:
+            week, word = parsed
+            env = next((e for e in envelopes if envelope_word_matches(word, e.name)), None)
+            if env is not None:
+                return env, f"Przelew FinBro: {week.label} {env.name}"
+        env = next(
+            (e for e in envelopes if e.target_account and same_account(tx.data.counterparty_account, e.target_account)),
+            None,
+        )
+        if env is not None:
+            return env, f"Przelew na rachunek koperty {env.name}"
+        return None
+
+    def _closed(self) -> list[Settlement]:
+        return [s for s in self.uow.settlements.list_all() if s.status in CLOSED_STATUSES]
+
+    def line_for_payment(self, tx: Transaction, envelope_id: int) -> SettlementLine | None:
+        """Linia rozliczenia dla przelewu: wskazana tytułem, a bez tytułu najstarsza niedopłata koperty."""
+        closed = self._closed()
+        parsed = parse_transfer_title(tx.data.title)
+        if parsed is not None:
+            settlement = next((s for s in closed if s.week == parsed[0]), None)
+            if settlement is not None and settlement.line_for(envelope_id) is not None:
+                return settlement.line_for(envelope_id)
+        paid = self.uow.settlements.paid_by_line()
+        for i, settlement in enumerate(closed):
+            line = settlement.line_for(envelope_id)
+            later_closed = i < len(closed) - 1
+            if line is not None and line_state(line, paid.get(line.id, Money.zero()), later_closed) is LineState.PENDING:
+                return line
+        # Brak niedopłat: przelew zaliczamy na ostatnie zamknięte rozliczenie (nadpłata przejdzie dalej).
+        return closed[-1].line_for(envelope_id) if closed else None
+
+    def sync_payment(self, tx: Transaction, refresh: bool = True) -> None:
+        """Utrzymuje przypisanie przelewu ODKŁADANIE do linii rozliczenia zgodnie z klasyfikacją."""
+        c = tx.classification
+        current_line = self.uow.settlements.payment_line_for(tx.id)
+        wanted = c.confirmed and c.type is TxType.ODKLADANIE and c.envelope_id is not None
+        if current_line is not None:
+            line_envelope = next((l.envelope_id for s in self._closed() for l in s.lines if l.id == current_line), None)
+            if wanted and line_envelope == c.envelope_id:
+                return
+            self.uow.settlements.remove_payment(tx.id)
+        if wanted:
+            line = self.line_for_payment(tx, c.envelope_id)
+            if line is not None and line.id is not None:
+                self.uow.settlements.add_payment(line.id, tx.id, abs(tx.amount))
+        if refresh:
+            self.refresh_statuses()
+
+    def recognize_transfers(self, transaction_ids: list[int]) -> int:
+        """Rozpoznaje w nowych wydatkach przelewy na koperty i zalicza je na rozliczenia."""
+        count = 0
+        for tx in self.uow.transactions.get_many(transaction_ids):
+            detected = self.detect_envelope(tx)
+            if detected is None:
+                continue
+            envelope, reason = detected
+            classified = self.uow.transactions.set_classification(
+                tx.id,
+                Classification(
+                    type=TxType.ODKLADANIE,
+                    envelope_id=envelope.id,
+                    source=tx.classification.source or ProposalSource.SYSTEM,
+                    rule_id=tx.classification.rule_id,
+                    reason=reason,
+                    confirmed=True,
+                    confirmed_at=datetime.now(UTC),
+                ),
+            )
+            self.uow.llm_jobs.cancel(tx.id)
+            self.sync_payment(classified, refresh=False)
+            count += 1
+        self.refresh_statuses()
+        return count
+
+    def refresh_statuses(self) -> None:
+        closed = self._closed()
+        if not closed:
+            return
+        life = next(e for e in self.uow.reference.envelopes() if e.is_life)
+        paid = self.uow.settlements.paid_by_line()
+        for i, settlement in enumerate(closed):
+            status = settlement_status(settlement, paid, i < len(closed) - 1, life.id)
+            if status is not settlement.status:
+                self.uow.settlements.set_status(settlement.week, status)

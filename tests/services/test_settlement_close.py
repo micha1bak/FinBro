@@ -86,5 +86,6 @@ def test_close_freezes_lines(uow):
 
 def test_close_with_warnings_is_allowed(uow):
     result = SettlementService(uow).close(T41, today=MONDAY)
-    assert result.settlement.status is SettlementStatus.CLOSED
     assert all(l.to_transfer == Money.zero() for l in result.settlement.lines)
+    # Bez kwot do przelania nie ma przelewów, więc rozliczenie jest od razu rozliczone.
+    assert result.settlement.status is SettlementStatus.SETTLED

@@ -197,6 +197,20 @@ class TransactionRepository:
         )
         return [row_to_domain(r) for r in self.session.scalars(stmt)]
 
+    def unassigned_savings(self) -> list[Transaction]:
+        """Zatwierdzone ODKŁADANIE z kopertą, jeszcze nieprzypisane do żadnej linii rozliczenia."""
+        tx, cl, pay = models.Transaction, models.Classification, models.SettlementPayment
+        stmt = (
+            select(tx)
+            .join(cl, cl.transaction_id == tx.id)
+            .outerjoin(pay, pay.transaction_id == tx.id)
+            .where(cl.confirmed.is_(True), cl.type == TxType.ODKLADANIE, cl.envelope_id.is_not(None))
+            .where(pay.id.is_(None))
+            .options(selectinload(tx.classification))
+            .order_by(tx.transaction_date, tx.id)
+        )
+        return [row_to_domain(r) for r in self.session.scalars(stmt)]
+
     def recent_user_decisions(self, direction: Direction, limit: int) -> list[Transaction]:
         """Ostatnie decyzje użytkownika w danym kierunku: przykłady dla modelu językowego."""
         tx, cl = models.Transaction, models.Classification

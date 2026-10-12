@@ -12,6 +12,7 @@ from finbro.domain.coverage import DateRange, coverage_gaps
 from finbro.domain.enums import TxSource
 from finbro.domain.transactions import TransactionData
 from finbro.importers.pko_xml import ImportFormatError, ParsedOperation, ParsedStatement, parse_statement
+from finbro.services.settlement import SettlementService
 from finbro.services.uow import UnitOfWork
 
 MAIN_ACCOUNT_CODE = "pko"
@@ -120,6 +121,7 @@ class ImportService:
     def after_import(self, result: ImportResult) -> None:
         """Klasyfikacja nowych transakcji w tej samej transakcji bazodanowej co zapis importu."""
         ClassificationPipeline(self.uow).classify(result.new_transaction_ids)
+        SettlementService(self.uow).recognize_transfers(list(result.new_transaction_ids))
 
     def covered_ranges(self) -> list[DateRange]:
         account = self.uow.reference.account(MAIN_ACCOUNT_CODE)
