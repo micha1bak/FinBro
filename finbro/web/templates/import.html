@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Import wyciągu – FinBro{% endblock %}
+{% block content %}
+<h1>Import wyciągu z iPKO</h1>
+
+{% if error %}
+<div class="notice error" role="alert"><strong>Import odrzucony.</strong> {{ error }}</div>
+{% endif %}
+
+{% if result %}
+<section class="notice ok" id="import-summary">
+  <strong>Import zakończony</strong> (wyciąg {{ result.date_from.isoformat() }} – {{ result.date_to.isoformat() }}).
+  <div class="cards">
+    <div class="card"><div class="muted">Nowe transakcje</div><div class="value" data-count="new">{{ result.new_count }}</div></div>
+    <div class="card"><div class="muted">Już istniejące</div><div class="value" data-count="existing">{{ result.existing_count }}</div></div>
+    <div class="card"><div class="muted">Pominięte blokady</div><div class="value" data-count="skipped">{{ result.skipped_count }}</div></div>
+  </div>
+  {% if result.new_count %}<p><a href="/inbox">Przejdź do skrzynki</a>, żeby zatwierdzić wpływy.</p>{% endif %}
+</section>
+{% endif %}
+
+<form method="post" action="/import" enctype="multipart/form-data">
+  <p class="muted">Wybierz plik XML wyeksportowany z historii rachunku w iPKO. Plik jest przetwarzany
+    w pamięci i nie jest zapisywany na dysku. Ponowny import nakładającego się okresu nie tworzy duplikatów.</p>
+  <input type="file" name="file" accept=".xml,application/xml,text/xml" required>
+  <button type="submit">Importuj</button>
+</form>
+
+<h2>Pokrycie importami</h2>
+{% if gaps %}
+<div class="notice warn">
+  Okresy bez zaimportowanego wyciągu od daty startu:
+  <ul id="coverage-gaps">
+    {% for gap in gaps %}<li>{{ gap.label() }}</li>{% endfor %}
+  </ul>
+</div>
+{% else %}
+<p class="muted">Brak luk w importach od daty startu.</p>
+{% endif %}
+
+{% if batches %}
+<h2>Ostatnie importy</h2>
+<table>
+  <thead><tr><th>Data importu</th><th>Plik</th><th>Zakres wyciągu</th><th class="num">Nowe</th><th class="num">Istniejące</th><th class="num">Blokady</th></tr></thead>
+  <tbody>
+  {% for b in batches %}
+    <tr>
+      <td>{{ b.created_at.strftime("%Y-%m-%d %H:%M") if b.created_at else "" }}</td>
+      <td>{{ b.filename or "" }}</td>
+      <td>{{ b.date_from.isoformat() }} – {{ b.date_to.isoformat() }}</td>
+      <td class="num">{{ b.new_count }}</td>
+      <td class="num">{{ b.existing_count }}</td>
+      <td class="num">{{ b.skipped_count }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
