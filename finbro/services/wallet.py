@@ -9,7 +9,7 @@ from finbro.domain.enums import ProposalSource, TxSource, TxType
 from finbro.domain.money import Money
 from finbro.domain.reference import Account
 from finbro.domain.transactions import Classification, Transaction, TransactionData
-from finbro.domain.wallet import WalletEntry, expected_balance, wallet_entries
+from finbro.domain.wallet import Inventory, WalletEntry, expected_balance, wallet_entries
 from finbro.services.classification import ClassificationService
 from finbro.services.uow import UnitOfWork
 
@@ -24,6 +24,12 @@ def positive(amount: Money, what: str = "Kwota") -> Money:
     if not amount.is_positive:
         raise WalletError(f"{what} musi być większa od zera.")
     return amount
+
+
+@dataclass(frozen=True)
+class InventoryResult:
+    inventory: Inventory
+    transaction: Transaction | None
 
 
 @dataclass(frozen=True)
@@ -87,6 +93,55 @@ class WalletService:
         """Dochód gotówkowy jest od razu zatwierdzonym DOCHODEM (bez skrzynki)."""
         return self._add_confirmed(
             day, positive(amount), note, Classification(type=TxType.DOCHOD, source=ProposalSource.USER)
+        )
+
+    def inventory(self, day: date, actual: Money) -> InventoryResult:
+        """Inwentaryzacja: porównuje faktyczny stan z oczekiwanym i wyrównuje różnicę.
+
+        Niedobór staje się wydatkiem w kategorii systemowej z datą inwentaryzacji.
+        Nadwyżka trafia do skrzynki jako niezatwierdzona pozycja (dochód gotówkowy albo
+        korekta stanu) i do czasu decyzji nie wchodzi do podziału. Stan zgodny nie tworzy wpisu.
+        """
+        if actual.is_negative:
+            raise WalletError("Faktyczny stan Portfela nie może być ujemny.")
+        try:
+            expected = self.expected(day)
+            difference = actual - expected
+            tx: Transaction | None = None
+            if difference.is_negative:
+                tx = self._add_inventory_tx(day, difference, "Inwentaryzacja: niezapisane wydatki gotówkowe")
+                system = self.uow.reference.system_category()
+                tx = ClassificationService(self.uow).confirm(
+                    tx,
+                    Classification(type=TxType.WYDATEK, category_id=system.id, source=ProposalSource.SYSTEM),
+                    chosen_by_user=False,
+                )
+            elif difference.is_positive:
+                tx = self._add_inventory_tx(day, difference, "Inwentaryzacja: nadwyżka gotówki")
+                tx = self.uow.transactions.set_classification(
+                    tx.id,
+                    Classification(
+                        reason="Nadwyżka w Portfelu: wybierz DOCHÓD (niezapisany dochód gotówkowy) "
+                        "albo TRANSFER (korekta stanu)."
+                    ),
+                )
+            record = self.uow.inventories.add(day, actual, expected, tx.id if tx else None)
+        except Exception:
+            self.uow.rollback()
+            raise
+        self.uow.commit()
+        return InventoryResult(inventory=record, transaction=tx)
+
+    def _add_inventory_tx(self, day: date, amount: Money, note: str) -> Transaction:
+        return self.uow.transactions.add(
+            TransactionData(
+                source=TxSource.INVENTORY,
+                account_id=self.account.id,
+                transaction_date=day,
+                booking_date=day,
+                amount=amount,
+                note=note,
+            )
         )
 
     def add_cash_expense(self, day: date, amount: Money, category_id: int | None, note: str | None = None) -> Transaction:

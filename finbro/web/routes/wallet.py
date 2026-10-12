@@ -43,6 +43,7 @@ def wallet_context(uow: UnitOfWork, at: date) -> dict[str, Any]:
         "categories": categories,
         "categories_by_id": {c.id: c for c in uow.reference.categories()},
         "debtors": uow.reference.debtors(),
+        "inventories": uow.inventories.latest(),
     }
 
 
@@ -95,6 +96,17 @@ def _expense(service: WalletService, form: Mapping[str, Any]) -> str:
     return f"Zapisano wydatek gotówkowy {amount.format()}"
 
 
+def _inventory(service: WalletService, form: Mapping[str, Any]) -> str:
+    result = service.inventory(parse_date(form.get("date"), date.today()), Money.parse(form["amount"]))
+    difference = result.inventory.difference
+    if difference.is_negative:
+        return f"Niedobór {abs(difference).format()} zapisany jako wydatek gotówkowy bez kategorii"
+    if difference.is_positive:
+        return f"Nadwyżka {difference.format()} czeka w skrzynce na decyzję"
+    return "Stan zgodny z oczekiwanym"
+
+
 form_route("/wallet/opening", _opening)
+form_route("/wallet/inventory", _inventory)
 form_route("/wallet/income", _income)
 form_route("/wallet/expense", _expense)

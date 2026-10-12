@@ -57,3 +57,16 @@ def expected_balance(
             continue
         total += entry.effect
     return total
+
+
+@dataclass(frozen=True)
+class Inventory:
+    id: int
+    inventory_date: date
+    actual: Money
+    expected: Money
+    transaction_id: int | None
+
+    @property
+    def difference(self) -> Money:
+        return self.actual - self.expected

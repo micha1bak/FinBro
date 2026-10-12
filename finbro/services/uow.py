@@ -12,6 +12,7 @@ from finbro.db.repositories.reference import ReferenceRepository
 from finbro.db.repositories.rules import RuleRepository
 from finbro.db.repositories.settlements import SettlementRepository
 from finbro.db.repositories.transactions import TransactionRepository
+from finbro.db.repositories.wallet import InventoryRepository
 
 
 class UnitOfWork:
@@ -43,6 +44,10 @@ class UnitOfWork:
     @cached_property
     def llm_jobs(self) -> LlmJobRepository:
         return LlmJobRepository(self.session)
+
+    @cached_property
+    def inventories(self) -> InventoryRepository:
+        return InventoryRepository(self.session)
 
     def commit(self) -> None:
         self.session.commit()

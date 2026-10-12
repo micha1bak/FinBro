@@ -46,7 +46,7 @@
 
 - [x] 6.1 Zaimplementować wyliczanie oczekiwanego stanu Portfela (stan początkowy, dochody i wydatki gotówkowe, transfery z bankomatu i do wpłatomatu, pożyczki i spłaty gotówkowe, inwentaryzacje). Weryfikacja: testy jednostkowe dla każdego rodzaju zdarzenia.
 - [x] 6.2 Dodać formularze: stan początkowy, dochód gotówkowy (od razu zatwierdzony DOCHÓD), wydatek gotówkowy z kategorią. Weryfikacja: testy `TestClient` sprawdzają zmianę stanu oczekiwanego i obecność dochodu jako zatwierdzonego.
-- [ ] 6.3 Zaimplementować inwentaryzację: niedobór → wydatek "Gotówka (bez kategorii)" na dzień inwentaryzacji, nadwyżka → pozycja w skrzynce (dochód gotówkowy albo korekta), stan zgodny → brak wpisu. Weryfikacja: testy trzech przypadków ze spec `cash-wallet` (900 → 340 daje wydatek 560,00 zł).
+- [x] 6.3 Zaimplementować inwentaryzację: niedobór → wydatek "Gotówka (bez kategorii)" na dzień inwentaryzacji, nadwyżka → pozycja w skrzynce (dochód gotówkowy albo korekta), stan zgodny → brak wpisu. Weryfikacja: testy trzech przypadków ze spec `cash-wallet` (900 → 340 daje wydatek 560,00 zł).
 
 ## 7. Należności
 

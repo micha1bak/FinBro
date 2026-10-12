@@ -19,6 +19,15 @@
 </div>
 
 <section class="forms-grid">
+  <form method="post" action="/wallet/inventory" class="panel">
+    <h2>Inwentaryzacja</h2>
+    <p class="muted">Policz gotówkę i wpisz faktyczny stan. Niedobór staje się wydatkiem
+      „Gotówka (bez kategorii)”, a nadwyżka trafia do skrzynki.</p>
+    <label>Na dzień <input type="date" name="date" value="{{ inventory_default.isoformat() }}" required></label>
+    <label>Faktyczny stan <input type="text" name="amount" inputmode="decimal" placeholder="340,00" required></label>
+    <button type="submit">Zapisz inwentaryzację</button>
+  </form>
+
   <form method="post" action="/wallet/income" class="panel">
     <h2>Dochód gotówkowy</h2>
     <p class="muted">Od razu zatwierdzony DOCHÓD, dzielony w rozliczeniu swojego tygodnia.</p>
@@ -50,6 +59,18 @@
     <button type="submit" class="secondary">Ustaw stan początkowy</button>
   </form>
 </section>
+
+{% if inventories %}
+<h2>Ostatnie inwentaryzacje</h2>
+<table>
+  <thead><tr><th>Dzień</th><th class="num">Oczekiwany</th><th class="num">Faktyczny</th><th class="num">Różnica</th></tr></thead>
+  <tbody>
+  {% for i in inventories %}
+    <tr><td>{{ i.inventory_date.isoformat() }}</td><td class="num">{{ i.expected|money }}</td><td class="num">{{ i.actual|money }}</td><td class="num">{{ i.difference|money(plus=True) }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
 
 <h2>Historia Portfela</h2>
 {% if state.entries %}

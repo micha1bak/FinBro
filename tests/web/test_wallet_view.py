@@ -50,3 +50,11 @@ def test_invalid_entries_are_rejected(client, configured):
     assert client.post("/wallet/income", data={"date": "2026-10-08", "amount": "-5"}).status_code == 400
     assert client.post("/wallet/income", data={"date": "2026-10-08", "amount": "abc"}).status_code == 400
     assert client.post("/wallet/opening", data={"date": "2026-10-05", "amount": "-1"}).status_code == 400
+
+
+def test_inventory_view(client, configured):
+    client.post("/wallet/opening", data={"date": "2026-10-05", "amount": "900"})
+    response = client.post("/wallet/inventory", data={"date": "2026-10-11", "amount": "340,00"})
+    assert response.status_code == 200
+    assert "Niedobór 560,00" in response.text
+    assert "Gotówka (bez kategorii)" in client.get("/wallet?at=2026-10-11").text

@@ -22,6 +22,7 @@
     {% else %}
       <span class="muted">brak propozycji</span>
     {% endif %}
+    {% if c.reason and not c.type %}<div class="muted">{{ c.reason }}</div>{% endif %}
     {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
   </td>
   <td class="actions">
