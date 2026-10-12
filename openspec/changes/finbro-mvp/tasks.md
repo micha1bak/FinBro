@@ -12,7 +12,7 @@
 
 ## 2. Domena podstawowa: kwoty i tygodnie
 
-- [ ] 2.1 Zaimplementować typ `Money` na groszach (`int`) z parsowaniem `"-645.00"`, `"+2753,36"` i `"1 234,56"` oraz formatowaniem po polsku. Weryfikacja: testy jednostkowe parsowania, formatowania, znaku i braku utraty dokładności.
+- [x] 2.1 Zaimplementować typ `Money` na groszach (`int`) z parsowaniem `"-645.00"`, `"+2753,36"` i `"1 234,56"` oraz formatowaniem po polsku. Weryfikacja: testy jednostkowe parsowania, formatowania, znaku i braku utraty dokładności.
 - [ ] 2.2 Zaimplementować tygodnie ISO 8601 (tydzień dla daty, zakres pon–nd, poprzedni i następny, etykieta `2026-T41`), miesiące i lata jako okresy. Weryfikacja: testy dla 2026-10-10 → T41, 2026-10-31 → T44 i przełomu roku.
 - [ ] 2.3 Zaimplementować podział sumy na koperty według udziałów w punktach bazowych, z zaokrągleniem w dół i resztą dla Życia. Weryfikacja: test 4950,03 zł → 618,75 / 618,75 / 1237,50 / 2475,03 oraz test własności "suma kopert = suma wejściowa" dla losowych kwot.
 
