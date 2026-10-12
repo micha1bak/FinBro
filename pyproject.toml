@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finbro"
+version = "0.1.0"
+description = "Lokalna aplikacja do podziału dochodów, rozliczeń tygodniowych i analizy finansów osobistych"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.143,<1.0",
+    "uvicorn>=0.54,<1.0",
+    "sqlalchemy>=2.1,<2.2",
+    "psycopg[binary]>=3.3,<4.0",
+    "alembic>=1.20,<2.0",
+    "sqladmin>=0.32,<1.0",
+    "jinja2>=3.1,<4.0",
+    "httpx>=0.28,<1.0",
+    "python-multipart>=0.0.32",
+    "itsdangerous>=2.2,<3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1,<10.0",
+    "hypothesis>=6.169,<7.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["finbro*"]
+
+[tool.setuptools.package-data]
+finbro = ["web/templates/**/*", "web/static/**/*", "db/migrations/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
