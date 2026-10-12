@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Portfel – FinBro{% endblock %}
+{% block content %}
+<h1>Portfel</h1>
+
+{% if message %}<div class="notice ok">{{ message }}</div>{% endif %}
+{% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+
+<div class="cards">
+  <div class="card">
+    <div class="muted">Stan oczekiwany na {{ state.at.isoformat() }}</div>
+    <div class="value" id="wallet-expected">{{ state.expected|money }}</div>
+  </div>
+  <div class="card">
+    <div class="muted">Stan początkowy</div>
+    <div class="value">{{ state.account.opening_balance|money }}</div>
+    <div class="muted">{% if state.account.opening_date %}na {{ state.account.opening_date.isoformat() }}{% else %}nie ustawiono{% endif %}</div>
+  </div>
+</div>
+
+<section class="forms-grid">
+  <form method="post" action="/wallet/income" class="panel">
+    <h2>Dochód gotówkowy</h2>
+    <p class="muted">Od razu zatwierdzony DOCHÓD, dzielony w rozliczeniu swojego tygodnia.</p>
+    <label>Data <input type="date" name="date" value="{{ today.isoformat() }}" required></label>
+    <label>Kwota <input type="text" name="amount" inputmode="decimal" placeholder="800,00" required></label>
+    <label>Opis <input type="text" name="note" placeholder="np. gotówka od klienta"></label>
+    <button type="submit">Zapisz dochód</button>
+  </form>
+
+  <form method="post" action="/wallet/expense" class="panel">
+    <h2>Wydatek gotówkowy</h2>
+    <label>Data <input type="date" name="date" value="{{ today.isoformat() }}" required></label>
+    <label>Kwota <input type="text" name="amount" inputmode="decimal" placeholder="120,00" required></label>
+    <label>Kategoria
+      <select name="category_id" required>
+        <option value="">—</option>
+        {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Opis <input type="text" name="note"></label>
+    <button type="submit">Zapisz wydatek</button>
+  </form>
+
+  <form method="post" action="/wallet/opening" class="panel">
+    <h2>Stan początkowy</h2>
+    <p class="muted">Gotówka na dzień startu FinBro. Nie jest ani przychodem, ani wydatkiem.</p>
+    <label>Data <input type="date" name="date" value="{{ (state.account.opening_date or start_date or today).isoformat() }}" required></label>
+    <label>Kwota <input type="text" name="amount" inputmode="decimal" value="{{ state.account.opening_balance|money(currency=False) }}" required></label>
+    <button type="submit" class="secondary">Ustaw stan początkowy</button>
+  </form>
+</section>
+
+<h2>Historia Portfela</h2>
+{% if state.entries %}
+<table>
+  <thead><tr><th>Data</th><th>Opis</th><th>Typ</th><th class="num">Zmiana stanu</th></tr></thead>
+  <tbody>
+  {% for e in state.entries|reverse %}
+    {% set tx = e.transaction %}
+    <tr>
+      <td>{{ tx.transaction_date.isoformat() }}</td>
+      <td>{{ tx.data.note or tx.counterparty or tx.data.bank_type or "" }}</td>
+      <td>{% if tx.classification.type %}{{ tx.classification.type.label }}{% if tx.classification.category_id %} · {{ categories_by_id[tx.classification.category_id].name }}{% endif %}{% else %}<span class="muted">do decyzji w skrzynce</span>{% endif %}</td>
+      <td class="num">{{ e.effect|money(plus=True) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Brak wpisów.</p>
+{% endif %}
+{% endblock %}

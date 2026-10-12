@@ -8,6 +8,7 @@ from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from finbro.db import models
+from finbro.domain.enums import TransferKind, TxType
 from finbro.domain.history import CounterpartyKey
 from finbro.domain.money import Money
 from finbro.domain.transactions import Classification, Direction, Transaction, TransactionData, TransactionFilter
@@ -182,6 +183,23 @@ class TransactionRepository:
                     tx.note.ilike(pattern),
                 )
             )
+        return [row_to_domain(r) for r in self.session.scalars(stmt)]
+
+    def wallet_related(self, wallet_account_id: int) -> list[Transaction]:
+        """Transakcje Portfela oraz zatwierdzone transfery z udziałem Portfela na innych kontach."""
+        tx, cl = models.Transaction, models.Classification
+        stmt = (
+            select(tx)
+            .outerjoin(cl, cl.transaction_id == tx.id)
+            .where(
+                or_(
+                    tx.account_id == wallet_account_id,
+                    (cl.confirmed.is_(True)) & (cl.type == TxType.TRANSFER) & (cl.transfer_kind == TransferKind.WALLET),
+                )
+            )
+            .options(selectinload(tx.classification))
+            .order_by(tx.transaction_date, tx.id)
+        )
         return [row_to_domain(r) for r in self.session.scalars(stmt)]
 
     def unconfirmed(self) -> list[Transaction]:

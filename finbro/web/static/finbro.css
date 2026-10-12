@@ -68,3 +68,10 @@ table.inbox td.actions details form label { display: block; margin: 0.3rem 0; }
 table.inbox td.actions select, table.inbox td.actions input[type="text"] { width: 100%; max-width: 16rem; }
 table.inbox td.actions summary { cursor: pointer; color: var(--accent); }
 table.inbox td.actions form.inline { margin-bottom: 0.3rem; }
+
+.forms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+.panel { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem 1rem; }
+.panel h2 { margin-top: 0; font-size: 1.05rem; }
+.panel label { display: block; }
+.panel input[type="text"], .panel select { width: 100%; }
+.filters { display: flex; flex-wrap: wrap; align-items: end; gap: 0.25rem 0.5rem; margin-bottom: 1rem; }
