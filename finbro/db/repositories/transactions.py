@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, selectinload
 from finbro.db import models
 from finbro.domain.history import CounterpartyKey
 from finbro.domain.money import Money
-from finbro.domain.transactions import Classification, Direction, Transaction, TransactionData
+from finbro.domain.transactions import Classification, Direction, Transaction, TransactionData, TransactionFilter
 
 _PL_UPPER, _PL_PLAIN = "ĄĆĘŁŃÓŚŹŻąćęłńóśźż", "ACELNOSZZacelnoszz"
 
@@ -156,6 +156,33 @@ class TransactionRepository:
             if row is not None:
                 return row_to_domain(row)
         return None
+
+    def search(self, f: TransactionFilter) -> list[Transaction]:
+        tx, cl = models.Transaction, models.Classification
+        stmt = (
+            select(tx)
+            .outerjoin(cl, cl.transaction_id == tx.id)
+            .where(tx.transaction_date.between(f.date_from, f.date_to))
+            .options(selectinload(tx.classification))
+            .order_by(tx.transaction_date.desc(), tx.id.desc())
+        )
+        if f.type is not None:
+            stmt = stmt.where(cl.type == f.type)
+        if f.category_id is not None:
+            stmt = stmt.where(cl.category_id == f.category_id)
+        if f.only_unconfirmed:
+            stmt = stmt.where(or_(cl.transaction_id.is_(None), cl.confirmed.is_(False)))
+        if f.text:
+            pattern = f"%{f.text.strip()}%"
+            stmt = stmt.where(
+                or_(
+                    tx.counterparty_name.ilike(pattern),
+                    tx.merchant.ilike(pattern),
+                    tx.title.ilike(pattern),
+                    tx.note.ilike(pattern),
+                )
+            )
+        return [row_to_domain(r) for r in self.session.scalars(stmt)]
 
     def unconfirmed(self) -> list[Transaction]:
         """Transakcje czekające na decyzję: bez klasyfikacji albo z niezatwierdzoną propozycją."""

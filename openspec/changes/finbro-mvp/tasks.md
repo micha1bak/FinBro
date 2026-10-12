@@ -40,7 +40,7 @@
 - [x] 5.3 Zaimplementować podpowiedź z historii kontrahenta (D9, krok 2). Weryfikacja: test, w którym druga płatność u tego samego sprzedawcy dostaje kategorię z pierwszej zatwierdzonej.
 - [x] 5.4 Zaimplementować potok po imporcie: reguły → historia → `LlmJob`, z regułami akceptacji z D9 (DOCHÓD zawsze niezatwierdzony, wydatki przyjmowane automatycznie, neutralne wpływy z reguł przyjmowane automatycznie). Weryfikacja: test integracyjny importu fixture'a sprawdza statusy `confirmed` i źródła propozycji dla każdej transakcji oraz to, że żadna transakcja z reguł nie trafiła do kolejki LLM.
 - [x] 5.5 Zbudować skrzynkę (HTMX): lista pozycji z propozycją, źródłem i uzasadnieniem, przyjęcie jednym kliknięciem, zmiana typu, kategorii lub dłużnika, opcja "zapamiętaj jako regułę", zbiorcze zatwierdzenie dochodów z reguł. Weryfikacja: testy `TestClient` dla przyjęcia, zmiany i utworzenia reguły, po których kolejny import tego kontrahenta dostaje propozycję z reguły.
-- [ ] 5.6 Dodać listę transakcji z filtrem i możliwością zmiany klasyfikacji dowolnej transakcji. Weryfikacja: test zmiany kategorii wydatku widocznej w odpowiedzi listy.
+- [x] 5.6 Dodać listę transakcji z filtrem i możliwością zmiany klasyfikacji dowolnej transakcji. Weryfikacja: test zmiany kategorii wydatku widocznej w odpowiedzi listy.
 
 ## 6. Portfel gotówkowy
 

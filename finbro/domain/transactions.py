@@ -77,6 +77,18 @@ class Classification:
 
 
 @dataclass(frozen=True)
+class TransactionFilter:
+    """Kryteria listy transakcji."""
+
+    date_from: date
+    date_to: date
+    type: TxType | None = None
+    category_id: int | None = None
+    text: str | None = None
+    only_unconfirmed: bool = False
+
+
+@dataclass(frozen=True)
 class Transaction:
     """Zapisana transakcja wraz z klasyfikacją."""
 

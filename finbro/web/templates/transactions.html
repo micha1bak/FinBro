@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Transakcje – FinBro{% endblock %}
+{% block content %}
+<h1>Transakcje</h1>
+
+<form method="get" action="/transactions" class="filters">
+  <label>Od <input type="date" name="from" value="{{ filter.date_from.isoformat() }}"></label>
+  <label>Do <input type="date" name="to" value="{{ filter.date_to.isoformat() }}"></label>
+  <label>Typ
+    <select name="type">
+      <option value="">wszystkie</option>
+      {% for t in tx_types %}<option value="{{ t.value }}"{% if filter.type == t %} selected{% endif %}>{{ t.label }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Kategoria
+    <select name="category_id">
+      <option value="">wszystkie</option>
+      {% for cat in categories_by_id.values() %}<option value="{{ cat.id }}"{% if filter.category_id == cat.id %} selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Szukaj <input type="search" name="q" value="{{ filter.text or '' }}" placeholder="kontrahent, tytuł…"></label>
+  <label><input type="checkbox" name="unconfirmed" value="1"{% if filter.only_unconfirmed %} checked{% endif %}> tylko niezatwierdzone</label>
+  <button type="submit">Filtruj</button>
+</form>
+
+<p class="muted">Znaleziono: {{ items|length }}</p>
+<table class="inbox">
+  <thead><tr><th>Data</th><th>Kontrahent / opis</th><th class="num">Kwota</th><th>Klasyfikacja</th><th></th></tr></thead>
+  <tbody>
+    {% for tx in items %}{% include "_tx_row.html" %}{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
