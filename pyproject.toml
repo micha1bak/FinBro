@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "finbro"
 version = "0.1.0"
 description = "Lokalna aplikacja do podziału dochodów, rozliczeń tygodniowych i analizy finansów osobistych"
+readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.143,<1.0",
