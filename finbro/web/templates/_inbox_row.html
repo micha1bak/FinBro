@@ -1,5 +1,7 @@
 {% set c = tx.classification %}
-<tr id="tx-{{ tx.id }}" class="inbox-row">
+{% set waiting = llm_enabled and tx.id in queued_ids and not c.type %}
+<tr id="tx-{{ tx.id }}" class="inbox-row"{% if waiting %}
+    hx-get="/inbox/{{ tx.id }}/row" hx-trigger="every 5s [!this.querySelector('details[open]')]" hx-swap="outerHTML"{% endif %}>
   <td>
     {{ tx.transaction_date.isoformat() }}
     <div class="muted">{{ tx.data.bank_type or tx.data.source.value|lower }}</div>
@@ -17,10 +19,10 @@
       {% if c.debtor_id %} · {{ debtors_by_id[c.debtor_id].name }}{% endif %}
       {% if c.transfer_kind %} · {{ c.transfer_kind.label }}{% endif %}
       <div class="muted">źródło: {{ c.source.label if c.source else "—" }}{% if c.reason %} · {{ c.reason }}{% endif %}</div>
-    {% elif tx.id in queued_ids %}
+    {% elif waiting %}
       <span class="muted" data-llm-pending>czeka na propozycję modelu językowego…</span>
     {% else %}
-      <span class="muted">brak propozycji</span>
+      <span class="muted">brak propozycji{% if not llm_enabled %} (model językowy wyłączony){% endif %}</span>
     {% endif %}
     {% if c.reason and not c.type %}<div class="muted">{{ c.reason }}</div>{% endif %}
     {% set repayment = repayment_suggestions.get(tx.id) if repayment_suggestions else none %}

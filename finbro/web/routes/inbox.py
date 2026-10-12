@@ -13,6 +13,7 @@ from finbro.domain.classification import ClassificationError
 from finbro.domain.enums import ProposalSource, TxType
 from finbro.domain.transactions import Transaction
 from finbro.services.classification import ClassificationService
+from finbro.services.llm_jobs import model_name
 from finbro.services.receivables import ReceivablesService
 from finbro.services.uow import UnitOfWork
 from finbro.web.deps import get_uow
@@ -24,11 +25,11 @@ router = APIRouter()
 
 def render_row(request: Request, uow: UnitOfWork, tx: Transaction, error: str | None = None) -> HTMLResponse:
     return templates.TemplateResponse(
-        request, "_inbox_row.html", {"tx": tx, "error": error, **form_context(uow), **inbox_extras(uow, [tx])}
+        request, "_inbox_row.html", {"tx": tx, "error": error, **form_context(uow), **inbox_extras(uow, [tx], request)}
     )
 
 
-def inbox_extras(uow: UnitOfWork, items: list[Transaction]) -> dict[str, Any]:
+def inbox_extras(uow: UnitOfWork, items: list[Transaction], request: Request | None = None) -> dict[str, Any]:
     """Stan kolejki LLM i podpowiedzi spłat od dłużników dla pozycji skrzynki."""
     receivables = ReceivablesService(uow)
     balances = receivables.balances()
@@ -38,7 +39,12 @@ def inbox_extras(uow: UnitOfWork, items: list[Transaction]) -> dict[str, Any]:
             match = receivables.suggest_repayment(tx, balances)
             if match is not None:
                 suggestions[tx.id] = match
-    return {"queued_ids": uow.llm_jobs.queued_transaction_ids(), "repayment_suggestions": suggestions}
+    llm_enabled = request is not None and model_name(request.app.state.settings, uow) is not None
+    return {
+        "queued_ids": uow.llm_jobs.queued_transaction_ids(),
+        "repayment_suggestions": suggestions,
+        "llm_enabled": llm_enabled,
+    }
 
 
 @router.get("/inbox", response_class=HTMLResponse)
@@ -55,7 +61,7 @@ def inbox(request: Request, uow: UnitOfWork = Depends(get_uow)) -> HTMLResponse:
             "rule_incomes": rule_incomes,
             "message": request.query_params.get("msg"),
             **form_context(uow),
-            **inbox_extras(uow, items),
+            **inbox_extras(uow, items, request),
         },
     )
 
@@ -73,6 +79,15 @@ def _failed(request: Request, uow: UnitOfWork, transaction_id: int, error: str) 
     if not is_htmx(request):
         response.status_code = 400
     return response
+
+
+@router.get("/inbox/{transaction_id}/row", response_class=HTMLResponse)
+def row(request: Request, transaction_id: int, uow: UnitOfWork = Depends(get_uow)) -> HTMLResponse:
+    """Aktualny wiersz skrzynki (odświeżanie, gdy model językowy liczy propozycję)."""
+    tx = uow.transactions.get(transaction_id)
+    if tx.classification.confirmed:
+        return HTMLResponse("")
+    return render_row(request, uow, tx)
 
 
 @router.post("/inbox/{transaction_id}/accept")

@@ -8,7 +8,7 @@ from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from finbro.db import models
-from finbro.domain.enums import TransferKind, TxType
+from finbro.domain.enums import ProposalSource, TransferKind, TxType
 from finbro.domain.history import CounterpartyKey
 from finbro.domain.money import Money
 from finbro.domain.transactions import Classification, Direction, Transaction, TransactionData, TransactionFilter
@@ -183,6 +183,20 @@ class TransactionRepository:
                     tx.note.ilike(pattern),
                 )
             )
+        return [row_to_domain(r) for r in self.session.scalars(stmt)]
+
+    def recent_user_decisions(self, direction: Direction, limit: int) -> list[Transaction]:
+        """Ostatnie decyzje użytkownika w danym kierunku: przykłady dla modelu językowego."""
+        tx, cl = models.Transaction, models.Classification
+        stmt = (
+            select(tx)
+            .join(cl, cl.transaction_id == tx.id)
+            .where(cl.confirmed.is_(True), cl.source == ProposalSource.USER)
+            .where(tx.amount > 0 if direction is Direction.IN else tx.amount < 0)
+            .options(selectinload(tx.classification))
+            .order_by(cl.confirmed_at.desc().nulls_last(), tx.id.desc())
+            .limit(limit)
+        )
         return [row_to_domain(r) for r in self.session.scalars(stmt)]
 
     def debtor_related(self) -> list[Transaction]:

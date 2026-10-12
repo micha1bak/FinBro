@@ -5,6 +5,9 @@
 <p class="muted">Transakcje czekające na decyzję. Wpływ staje się DOCHODEM dopiero po zatwierdzeniu.</p>
 
 {% if message %}<div class="notice ok">{{ message }}</div>{% endif %}
+{% if llm_enabled and queued_ids %}
+<div class="notice" id="llm-status">Model językowy przygotowuje propozycje w tle ({{ queued_ids|length }} w kolejce). Wiersze odświeżą się same.</div>
+{% endif %}
 
 {% if rule_incomes %}
 <form method="post" action="/inbox/approve-rule-incomes" class="notice warn">

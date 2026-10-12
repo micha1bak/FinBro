@@ -5,7 +5,8 @@ Uruchomienie: ``uvicorn finbro.web.app:create_app --factory``.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
@@ -14,23 +15,47 @@ from fastapi.staticfiles import StaticFiles
 
 from finbro.config import Settings, load_dotenv
 from finbro.db.session import make_engine, make_session_factory, ping
+from finbro.services.llm_jobs import LlmJobService, ollama_factory
 from finbro.web.admin import setup_admin
 from finbro.web.routes import imports, inbox, receivables, transactions, wallet
 from finbro.web.templating import WEB_DIR, templates
+from finbro.web.worker import LlmWorker
 
 
-def create_app(settings: Settings | None = None, session_factory: Callable[..., Any] | None = None) -> FastAPI:
-    """Tworzy aplikację. ``session_factory`` pozwala testom podać sesje w transakcji testu."""
+def create_app(
+    settings: Settings | None = None,
+    session_factory: Callable[..., Any] | None = None,
+    start_worker: bool = True,
+) -> FastAPI:
+    """Tworzy aplikację.
+
+    ``session_factory`` pozwala testom podać sesje w transakcji testu, a ``start_worker``
+    wyłącza wątek LLM (testy uruchamiają kolejkę synchronicznie).
+    """
     if settings is None:
         load_dotenv()
         settings = Settings.from_env()
 
     engine = make_engine(settings.database_url)
+    sessions = session_factory or make_session_factory(engine)
+    llm_jobs = LlmJobService(sessions, ollama_factory(settings))
 
-    app = FastAPI(title="FinBro", docs_url=None, redoc_url=None)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        worker = LlmWorker(llm_jobs) if start_worker else None
+        if worker is not None:
+            worker.start()
+        try:
+            yield
+        finally:
+            if worker is not None:
+                worker.stop()
+
+    app = FastAPI(title="FinBro", docs_url=None, redoc_url=None, lifespan=lifespan)
     app.state.settings = settings
     app.state.engine = engine
-    app.state.session_factory = session_factory or make_session_factory(engine)
+    app.state.session_factory = sessions
+    app.state.llm_jobs = llm_jobs
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
     setup_admin(app, engine, app.state.session_factory)
     app.include_router(imports.router)
