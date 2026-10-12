@@ -12,8 +12,10 @@ from finbro.domain.receivables import (
     ReceivableError,
     ReceivableEvent,
     balance,
+    check_forgiveness,
     check_repayment,
     events_for,
+    forgiveness_transaction,
     oldest_unpaid_loan_date,
 )
 from finbro.domain.reference import Debtor
@@ -59,6 +61,30 @@ class ReceivablesService:
         debtor = self.uow.reference.debtor(debtor_id)
         events = events_for(self._related(), debtor_id)
         return DebtorBalance(debtor, balance(events), oldest_unpaid_loan_date(events), events)
+
+    def total(self, balances: list[DebtorBalance] | None = None) -> Money:
+        items = balances if balances is not None else self.balances()
+        return sum((b.balance for b in items), Money.zero())
+
+    def forgive(self, debtor_id: int, amount: Money, day: date, category_id: int) -> Transaction:
+        """Darowanie całości lub części salda: zmniejsza saldo i jest wydatkiem w wybranej kategorii."""
+        # Import lokalny: ClassificationService sam korzysta z ReceivablesService.
+        from finbro.services.classification import ClassificationService
+
+        current = self.of(debtor_id)
+        check_forgiveness(current.balance, amount, current.debtor.name)
+        data, classification = forgiveness_transaction(debtor_id, amount, day, category_id, current.debtor.name)
+        try:
+            tx = self.uow.transactions.add(data)
+            tx = ClassificationService(self.uow).confirm(tx, classification)
+        except Exception:
+            self.uow.rollback()
+            raise
+        self.uow.commit()
+        return tx
+
+    def history(self, debtor_id: int) -> list[Transaction]:
+        return [t for t in self._related() if t.classification.debtor_id == debtor_id]
 
     def check_change(self, tx: Transaction, new: Classification) -> None:
         """Nowa klasyfikacja nie może dać ujemnego salda żadnego z dotkniętych dłużników."""
