@@ -17,6 +17,7 @@ from finbro.domain.history import CounterpartyKey
 from finbro.domain.rules import Rule, RuleConditions, RuleResult
 from finbro.domain.transactions import Classification, Transaction
 from finbro.services.receivables import ReceivablesService
+from finbro.services.settlement import SettlementService
 from finbro.services.uow import UnitOfWork
 
 USER_RULE_PRIORITY = 50
@@ -90,14 +91,15 @@ class ClassificationService:
             raise ClassificationError("Wybierz typ transakcji.")
         final = self._validate(tx, classification, chosen_by_user)
         final = replace(final, confirmed=True, confirmed_at=self.now())
-        self.before_confirm(tx, final)
+        final = self.before_confirm(tx, final)
         updated = self.uow.transactions.set_classification(tx.id, final)
         self.uow.llm_jobs.cancel(tx.id)
         return updated
 
-    def before_confirm(self, tx: Transaction, final: Classification) -> None:
+    def before_confirm(self, tx: Transaction, final: Classification) -> Classification:
         """Kontrole i skutki zatwierdzenia w tej samej transakcji bazodanowej."""
         ReceivablesService(self.uow).check_change(tx, final)
+        return SettlementService(self.uow).on_income_change(tx, final)
 
     def accept_proposal(self, transaction_id: int) -> Transaction:
         tx = self.uow.transactions.get(transaction_id)

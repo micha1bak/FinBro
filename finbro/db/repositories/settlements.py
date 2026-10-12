@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, selectinload
 
 from finbro.db import models
 from finbro.domain.enums import SettlementStatus
 from finbro.domain.money import Money
 from finbro.domain.periods import IsoWeek
-from finbro.domain.settlement import Settlement, SettlementLine
+from finbro.domain.settlement import CLOSED_STATUSES, Settlement, SettlementAdjustment, SettlementLine
 
 
 def line_to_domain(row: models.SettlementLine) -> SettlementLine:
@@ -83,3 +86,49 @@ class SettlementRepository:
             select(models.Settlement).options(selectinload(models.Settlement.lines)).order_by(models.Settlement.week_start)
         )
         return [settlement_to_domain(r) for r in rows]
+
+    def lock_week(self, week: IsoWeek, exclusive: bool = False) -> SettlementStatus:
+        """Blokuje wiersz rozliczenia tygodnia (tworząc go jako otwarty) i zwraca jego status.
+
+        Zatwierdzanie dochodu bierze blokadę współdzieloną, a zamknięcie wyłączną (D7),
+        więc dochód nie trafi do tygodnia, który właśnie się zamyka.
+        """
+        self.session.execute(
+            insert(models.Settlement)
+            .values(week_start=week.start, status=SettlementStatus.OPEN)
+            .on_conflict_do_nothing(index_elements=[models.Settlement.week_start])
+        )
+        stmt = select(models.Settlement.status).where(models.Settlement.week_start == week.start)
+        stmt = stmt.with_for_update() if exclusive else stmt.with_for_update(read=True)
+        return self.session.scalar(stmt)
+
+    def closed_weeks(self) -> set[IsoWeek]:
+        rows = self.session.scalars(
+            select(models.Settlement.week_start).where(models.Settlement.status.in_(CLOSED_STATUSES))
+        )
+        return {IsoWeek.of(d) for d in rows}
+
+    def add_adjustment(self, week: IsoWeek, transaction_id: int, amount: Money, income_date: date) -> None:
+        self.session.add(
+            models.SettlementAdjustment(
+                week_start=week.start, transaction_id=transaction_id, amount=amount.grosze, income_date=income_date
+            )
+        )
+        self.session.flush()
+
+    def adjustments(self, week: IsoWeek) -> list[SettlementAdjustment]:
+        rows = self.session.scalars(
+            select(models.SettlementAdjustment)
+            .where(models.SettlementAdjustment.week_start == week.start)
+            .order_by(models.SettlementAdjustment.id)
+        )
+        return [
+            SettlementAdjustment(
+                week=IsoWeek.of(r.week_start),
+                transaction_id=r.transaction_id,
+                amount=Money(r.amount),
+                income_date=r.income_date,
+                id=r.id,
+            )
+            for r in rows
+        ]
