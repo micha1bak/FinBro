@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<account-history>
+  <search>
+    <account>27 1020 **** **** **** **** 9012</account>
+    <date since="2026-10-08" to="2026-10-18"/>
+    <filtering>Wszystkie</filtering>
+  </search>
+  <operations>
+    <operation>
+      <exec-date>2026-10-16</exec-date>
+      <order-date>2026-10-16</order-date>
+      <type>Przelew na konto</type>
+      <description>Rachunek nadawcy : 12 1140 2004 0000 3102 1234 5678 Nazwa nadawcy : KANCELARIA PRAWNA LEX SP. Z O.O. Tytuł : zgodnie z umową zlecenie 10/2026</description>
+      <amount curr="PLN">+3100.00</amount>
+      <ending-balance curr="PLN">+8858.14</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-14</exec-date>
+      <order-date>2026-10-14</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786291 Lokalizacja : Adres : JMP S.A. BIEDRONKA 2422 Miasto : WARSZAWA Kraj : POLSKA Data wykonania operacji : 2026-10-14 Oryginalna kwota operacji : 88.10 PLN Numer karty : 425125******0042</description>
+      <amount curr="PLN">-88.10</amount>
+      <ending-balance curr="PLN">+5758.14</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-13</exec-date>
+      <order-date>2026-10-13</order-date>
+      <type>Przelew z rachunku</type>
+      <description>Rachunek odbiorcy : 71 1020 1097 0000 7777 8888 9999 Nazwa odbiorcy : PKO BP OBLIGACJE Tytuł : zakup obligacji</description>
+      <amount curr="PLN">-618.75</amount>
+      <ending-balance curr="PLN">+5846.24</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-12</order-date>
+      <type>Przelew z rachunku</type>
+      <description>Rachunek odbiorcy : 52 1050 0000 3333 4444 5555 6666 Nazwa odbiorcy : X-TRADE BROKERS DM S.A. Tytuł : finbro 2026-t41 xtb</description>
+      <amount curr="PLN">-700.00</amount>
+      <ending-balance curr="PLN">+6464.99</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-12</order-date>
+      <type>Przelew z rachunku</type>
+      <description>Rachunek odbiorcy : LT62 3250 0000 1111 2222 Nazwa odbiorcy : JAN TESTOWY REVOLUT Tytuł : FinBro  2026-T41 Wakacje</description>
+      <amount curr="PLN">-1200.00</amount>
+      <ending-balance curr="PLN">+7164.99</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-11</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786290 Lokalizacja : Adres : ALLEGRO SP. Z O.O. Miasto : POZNAN Kraj : POLSKA Data wykonania operacji : 2026-10-11 Oryginalna kwota operacji : 19.99 PLN Numer karty : 425125******0042</description>
+      <amount curr="PLN">-19.99</amount>
+      <ending-balance curr="PLN">+8364.99</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-10</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786289 Lokalizacja : Adres : ORLEN STACJA NR 123 Miasto : LOMIANKI Kraj : POLSKA Data wykonania operacji : 2026-10-10 Oryginalna kwota operacji : 45.00 PLN Numer karty : 425125******0042 Kod MCC : 5541</description>
+      <amount curr="PLN">-45.00</amount>
+      <ending-balance curr="PLN">+8384.98</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-10</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786288 Lokalizacja : Adres : RESTAURACJA POD TESTEM Miasto : WARSZAWA Kraj : POLSKA Data wykonania operacji : 2026-10-10 Oryginalna kwota operacji : 120.45 PLN Numer karty : 425125******0042</description>
+      <amount curr="PLN">-120.45</amount>
+      <ending-balance curr="PLN">+8429.98</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-11</exec-date>
+      <order-date>2026-10-11</order-date>
+      <type>Przelew na konto</type>
+      <description>Rachunek nadawcy : 44 1090 0000 0000 0001 2345 6789 Nazwa nadawcy : MARTYNA TESTOWA Tytuł : oddaję część</description>
+      <amount curr="PLN">+500.00</amount>
+      <ending-balance curr="PLN">+8550.43</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-11</exec-date>
+      <order-date>2026-10-11</order-date>
+      <type>Przelew na konto</type>
+      <description>Rachunek nadawcy : 33 1050 1445 1000 0090 1111 2222 Nazwa nadawcy : STUDIO GRAFICZNE PIKSEL Tytuł : faktura 15/10/2026</description>
+      <amount curr="PLN">+705.87</amount>
+      <ending-balance curr="PLN">+8050.43</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-09</exec-date>
+      <order-date>2026-10-09</order-date>
+      <type>Wpłata gotówki we wpłatomacie</type>
+      <description>Lokalizacja : Adres : WPLATOMAT PKO BP Miasto : WARSZAWA Kraj : POLSKA</description>
+      <amount curr="PLN">+1000.00</amount>
+      <ending-balance curr="PLN">+7344.56</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-08</exec-date>
+      <order-date>2026-10-08</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786287 Lokalizacja : Adres : ZABKA Z8627 K.1 Miasto : LOMIANKI Kraj : POLSKA Data wykonania operacji : 2026-10-08 Oryginalna kwota operacji : 7.00 PLN Numer karty : 425125******0042</description>
+      <amount curr="PLN">-7.00</amount>
+      <ending-balance curr="PLN">+6344.56</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-08</exec-date>
+      <order-date>2026-10-08</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786287 Lokalizacja : Adres : ZABKA Z8627 K.1 Miasto : LOMIANKI Kraj : POLSKA Data wykonania operacji : 2026-10-08 Oryginalna kwota operacji : 7.00 PLN Numer karty : 425125******0042</description>
+      <amount curr="PLN">-7.00</amount>
+      <ending-balance curr="PLN">+6351.56</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-08</exec-date>
+      <order-date>2026-10-08</order-date>
+      <type>Płatność web - kod mobilny</type>
+      <description>000498849 74230786286 Lokalizacja : Adres : NETFLIX.COM Miasto : Amsterdam Kraj : HOLANDIA Data wykonania operacji : 2026-10-08 Oryginalna kwota operacji : 69.22 PLN Numer karty : 425125******0042</description>
+      <amount curr="PLN">-69.22</amount>
+      <ending-balance curr="PLN">+6358.56</ending-balance>
+    </operation>
+  </operations>
+</account-history>

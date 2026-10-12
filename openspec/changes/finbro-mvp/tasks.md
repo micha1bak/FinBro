@@ -27,7 +27,7 @@
 
 ## 4. Import wyciągów XML z iPKO
 
-- [ ] 4.1 Przygotować syntetyczne fixture'y XML odwzorowujące strukturę iPKO: przelew przychodzący, płatność kartą zaksięgowana później, BLIK wychodzący o mylącym typie, bankomat, "Przelew z karty" Revolut, dwie identyczne płatności tego samego dnia, operacja bez `exec-date`, nieznana etykieta. Wszystkie dane zmyślone. Weryfikacja: pliki są w `tests/fixtures/` i nie zawierają danych z prawdziwego wyciągu.
+- [x] 4.1 Przygotować syntetyczne fixture'y XML odwzorowujące strukturę iPKO: przelew przychodzący, płatność kartą zaksięgowana później, BLIK wychodzący o mylącym typie, bankomat, "Przelew z karty" Revolut, dwie identyczne płatności tego samego dnia, operacja bez `exec-date`, nieznana etykieta. Wszystkie dane zmyślone. Weryfikacja: pliki są w `tests/fixtures/` i nie zawierają danych z prawdziwego wyciągu.
 - [ ] 4.2 Zaimplementować parser `importers/pko_xml.py`: daty, kwota i saldo, numer rachunku z `search`, rozbicie opisu po znanych etykietach (D4), zachowanie surowego opisu, kierunek ze znaku kwoty. Weryfikacja: testy jednostkowe na fixture'ach dla każdego scenariusza ze spec `transaction-import`.
 - [ ] 4.3 Zaimplementować zapis importu: weryfikację rachunku, pomijanie blokad, deduplikację po odcisku z numerem wystąpienia w obrębie pliku (`INSERT ... ON CONFLICT DO NOTHING`), atomowość i `ImportBatch` z licznikami. Weryfikacja: testy integracyjne na bazie testowej dla nakładających się importów, identycznych płatności, złego rachunku i uszkodzonego pliku (zero zapisanych transakcji).
 - [ ] 4.4 Zaimplementować wyliczanie pokrycia okresów importami i luk od daty startu. Weryfikacja: test dla importów 05–11.10 i 19–25.10 wskazuje lukę 12–18.10.

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<account-history>
+  <search>
+    <account>27 1020 1026 0000 1234 5678 9012</account>
+    <date since="2026-10-05" to="2026-10-11"/>
+    <filtering>Wszystkie</filtering>
+  </search>
+  <operations>
+    <operation>
+      <exec-date>2026-10-06</exec-date>
+      <order-date>2026-10-06</order-date>
+      <type>Przelew na telefon przychodz. zew.</type>
+      <description>Rachunek odbiorcy : 44 1090 0000 0000 0001 2345 6789 Nazwa odbiorcy : MARTYNA TESTOWA Tytuł : przelew na telefon Numer telefonu : +48 600 100 200 Numer referencyjny : 99887766554</description>
+      <amount curr="PLN">-645.00</amount>
+      <ending-balance curr="PLN">+8550.70</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-05</exec-date>
+      <order-date>2026-10-05</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786283 Lokalizacj
