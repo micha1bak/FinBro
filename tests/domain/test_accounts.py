@@ -42,3 +42,12 @@ def test_does_not_match(candidate):
 def test_unconfigured_account_never_matches():
     assert not account_matches(MAIN, None)
     assert not account_matches(MAIN, "")
+
+
+def test_same_account():
+    from finbro.domain.accounts import same_account
+
+    assert same_account("PL61 1140 2004 0000 3502 7777 0001", "61114020040000350277770001")
+    assert not same_account("61 1140 2004 0000 3502 7777 0001", "61 1140 2004 0000 3502 7777 0002")
+    assert not same_account("27 1020 **** 9012", "27 1020 **** 9012")
+    assert not same_account(None, None)

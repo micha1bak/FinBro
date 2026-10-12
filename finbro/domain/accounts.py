@@ -35,3 +35,9 @@ def account_matches(candidate: str | None, configured: str | None) -> bool:
     if not head and not tail:
         return False
     return len(a) == len(b) and b.startswith(head) and b.endswith(tail)
+
+
+def same_account(a: str | None, b: str | None) -> bool:
+    """Czy dwa pełne (niezamaskowane) numery to ten sam rachunek, z prefiksem kraju lub bez."""
+    x, y = _digits_core(normalize_account(a)), _digits_core(normalize_account(b))
+    return bool(x) and "*" not in x and x == y

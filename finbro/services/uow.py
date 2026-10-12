@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from finbro.db.repositories.imports import ImportRepository
 from finbro.db.repositories.reference import ReferenceRepository
+from finbro.db.repositories.rules import RuleRepository
 from finbro.db.repositories.settlements import SettlementRepository
 from finbro.db.repositories.transactions import TransactionRepository
 
@@ -33,6 +34,10 @@ class UnitOfWork:
     @cached_property
     def imports(self) -> ImportRepository:
         return ImportRepository(self.session)
+
+    @cached_property
+    def rules(self) -> RuleRepository:
+        return RuleRepository(self.session)
 
     def commit(self) -> None:
         self.session.commit()

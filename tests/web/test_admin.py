@@ -97,3 +97,43 @@ def test_settings_can_be_edited(client, db_session):
     assert response.status_code == 302
     db_session.expire_all()
     assert db_session.get(models.AppSettings, 1).start_date == date(2026, 10, 5)
+
+
+def test_rule_with_invalid_conditions_is_rejected(client, db_session):
+    response = client.post(
+        "/admin/rule/create",
+        data={"name": "Zła", "priority": "50", "active": "y", "conditions": '{"kolor": "zielony"}', "result_type": "TRANSFER", "save": "Save"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 400
+    assert "Nieznane warunki" in response.text
+
+
+def test_rule_requiring_category_is_rejected_without_it(client, db_session):
+    response = client.post(
+        "/admin/rule/create",
+        data={"name": "Netflix", "priority": "50", "active": "y", "conditions": '{"direction": "OUT", "merchant": "NETFLIX"}', "result_type": "WYDATEK", "save": "Save"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 400
+    assert "kategorii" in response.text
+
+
+def test_valid_rule_is_saved(client, db_session):
+    category = db_session.scalar(select(models.Category).where(models.Category.name == "Abonamenty i subskrypcje"))
+    response = client.post(
+        "/admin/rule/create",
+        data={
+            "name": "Netflix",
+            "priority": "50",
+            "active": "y",
+            "conditions": '{"direction": "OUT", "merchant": "NETFLIX"}',
+            "result_type": "WYDATEK",
+            "result_category": str(category.id),
+            "save": "Save",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    rule = db_session.scalar(select(models.Rule).where(models.Rule.name == "Netflix"))
+    assert rule.result_category_id == category.id

@@ -27,6 +27,8 @@ from finbro.db.models import (
     Rule,
 )
 from finbro.domain.allocation import AllocationError, format_basis_points, parse_percent, validate_shares
+from finbro.domain.enums import TransferKind, TxType
+from finbro.domain.rules import CONDITION_HELP, RuleConditions, RuleResult, validate_rule
 
 
 class CategoryAdmin(ModelView, model=Category):
@@ -101,6 +103,24 @@ class RuleAdmin(ModelView, model=Rule):
         Rule.result_transfer_kind,
     ]
     column_default_sort = "priority"
+    form_args = {"conditions": {"description": CONDITION_HELP}}
+
+    async def on_model_change(self, data: dict, model: Any, is_created: bool, request: Request) -> None:
+        def ref_id(value: Any) -> Any:
+            return getattr(value, "id", value) or None
+
+        result_type = data.get("result_type")
+        transfer_kind = data.get("result_transfer_kind")
+        conditions = RuleConditions.from_json(data.get("conditions"))
+        validate_rule(
+            conditions,
+            RuleResult(
+                type=TxType(getattr(result_type, "value", result_type)),
+                category_id=ref_id(data.get("result_category")),
+                debtor_id=ref_id(data.get("result_debtor")),
+                transfer_kind=TransferKind(getattr(transfer_kind, "value", transfer_kind)) if transfer_kind else None,
+            ),
+        )
 
 
 class SettingsAdmin(ModelView, model=AppSettings):

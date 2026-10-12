@@ -77,3 +77,11 @@ def test_settings_row_exists(db_session):
     settings = db_session.get(models.AppSettings, 1)
     assert settings is not None
     assert settings.start_date is None
+
+
+def test_starting_rules_load_through_repository(db_session):
+    from finbro.db.repositories.rules import RuleRepository
+
+    rules = RuleRepository(db_session).active()
+    assert len(rules) == 4
+    assert [r.priority for r in rules] == sorted(r.priority for r in rules)

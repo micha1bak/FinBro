@@ -47,7 +47,8 @@ ENVELOPES = [
 INITIAL_PLAN_FROM = date(2000, 1, 1)
 
 # Mniejsza liczba = wyższy priorytet. Warunki tekstowe porównujemy bez wielkości liter
-# i polskich znaków; lista oznacza "którykolwiek z".
+# i polskich znaków; lista oznacza "którykolwiek z". Warunki to rdzenie słów, bo nazwy
+# typów odmieniają się ("Wypłata w bankomacie", "wpłatomat").
 RULES = [
     dict(
         name="Przelew z tytułem FinBro → ODKŁADANIE",
@@ -59,14 +60,14 @@ RULES = [
     dict(
         name="Wypłata z bankomatu → Portfel",
         priority=20,
-        conditions={"direction": "OUT", "bank_type": "bankomat"},
+        conditions={"direction": "OUT", "bank_type": "bankoma"},
         result_type="TRANSFER",
         result_transfer_kind="WALLET",
     ),
     dict(
         name="Wpłata gotówki na konto → z Portfela",
         priority=20,
-        conditions={"direction": "IN", "bank_type": ["wpłatomat", "wpłata gotówk"]},
+        conditions={"direction": "IN", "bank_type": ["wpłatoma", "wpłata gotówk"]},
         result_type="TRANSFER",
         result_transfer_kind="WALLET",
     ),
