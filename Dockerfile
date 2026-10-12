@@ -28,3 +28,18 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
 
 # Wewnątrz kontenera serwer słucha na 0.0.0.0; dostęp ogranicza publikacja portu na 127.0.0.1.
 CMD ["sh", "-c", "alembic upgrade head && exec uvicorn finbro.web.app:create_app --factory --host 0.0.0.0 --port 8000 --workers 1"]
+
+
+# Obraz do testów: zależności deweloperskie i testy z syntetycznymi fixture'ami.
+FROM runtime AS dev
+
+USER root
+RUN python -c "import tomllib; p = tomllib.load(open('pyproject.toml', 'rb'))['project']; open('/tmp/requirements-dev.txt', 'w').write('\n'.join(p['optional-dependencies']['dev']))" \
+    && pip install -r /tmp/requirements-dev.txt \
+    && chown finbro /app
+
+COPY --chown=finbro tests ./tests
+USER finbro
+
+HEALTHCHECK NONE
+CMD ["pytest"]

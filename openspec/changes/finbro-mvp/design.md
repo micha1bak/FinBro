@@ -155,7 +155,7 @@ services:
 - **Jeden worker Uvicorna.** Worker LLM z D9 to wątek w procesie aplikacji. Jeden proces wystarcza dla jednego użytkownika i upraszcza zarządzanie zasobami CPU.
 - **Kopie zapasowe:** `pg_dump -Fc` wykonywany wewnątrz kontenera do pliku, potem `docker compose cp` na hosta (do `backups/`). Przywracanie przez `pg_restore --clean`. Nie przekierowujemy wyjścia `pg_dump` przez `>` w PowerShellu, bo zmienia on kodowanie strumienia i psuje binarny dump.
 - **Ollama jako opcjonalny profil.** `docker compose up` uruchamia bazę i aplikację, a `docker compose --profile llm up` także model. Bez profilu klasyfikacja kończy się na regułach i historii (spec: "Model niedostępny"). Pobranie modelu: `docker compose exec ollama ollama pull <model>`.
-- **Praca deweloperska** w `.venv` (szybkie testy, debugowanie w PyCharmie) z bazą z compose: `docker compose up -d db`, a potem aplikacja i `pytest` lokalnie. Testy można też uruchomić w kontenerze: `docker compose run --rm app pytest`.
+- **Praca deweloperska** w `.venv` (szybkie testy, debugowanie w PyCharmie) z bazą z compose: `docker compose up -d db`, a potem aplikacja i `pytest` lokalnie. Testy można też uruchomić w kontenerze: `docker compose run --rm tests pytest` (usługa `tests` w profilu `test`, obraz z etapu `dev` z zależnościami deweloperskimi; obraz aplikacji ich nie zawiera).
 - *Alternatywa:* Ollama zainstalowana natywnie w Windows, osiągana z kontenera przez `host.docker.internal`. Na CPU wydajność jest zbliżona, ale konfiguracja się rozdwaja. Zostawiamy jako opcję: wystarczy zmienić `OLLAMA_URL`.
 
 ### D14. Reguły początkowe jako dane
