@@ -6,13 +6,14 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 from finbro.config import Settings, load_dotenv
+from finbro.db.models import Base
 
 config = context.config
 
 if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-target_metadata = None
+target_metadata = Base.metadata
 
 
 def database_url() -> str:
