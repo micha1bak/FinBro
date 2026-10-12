@@ -4,12 +4,21 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from finbro.db import models
+from finbro.domain.history import CounterpartyKey
 from finbro.domain.money import Money
-from finbro.domain.transactions import Classification, Transaction, TransactionData
+from finbro.domain.transactions import Classification, Direction, Transaction, TransactionData
+
+_PL_UPPER, _PL_PLAIN = "ĄĆĘŁŃÓŚŹŻąćęłńóśźż", "ACELNOSZZacelnoszz"
+
+
+def _folded(column: ColumnElement[str | None]) -> ColumnElement[str]:
+    """Odpowiednik ``finbro.domain.text.fold`` w SQL: małe litery, bez polskich znaków i nadmiarowych spacji."""
+    collapsed = func.trim(func.regexp_replace(column, r"\s+", " ", "g"))
+    return func.lower(func.translate(collapsed, _PL_UPPER, _PL_PLAIN))
 
 _DATA_FIELDS = (
     "source",
@@ -118,6 +127,35 @@ class TransactionRepository:
         if account_id is not None:
             stmt = stmt.where(models.Transaction.account_id == account_id)
         return [row_to_domain(r) for r in self.session.scalars(stmt)]
+
+    def last_confirmed_like(self, key: CounterpartyKey, exclude_id: int | None = None) -> Transaction | None:
+        """Ostatnia zatwierdzona transakcja tego kontrahenta w tym samym kierunku.
+
+        Najpierw szukamy po rachunku kontrahenta, a gdy brak wyniku, po znormalizowanej
+        nazwie kontrahenta lub sprzedawcy (bez wielkości liter, polskich znaków i nadmiarowych spacji).
+        """
+        tx, cl = models.Transaction, models.Classification
+        base = (
+            select(tx)
+            .join(cl, cl.transaction_id == tx.id)
+            .where(cl.confirmed, cl.type.is_not(None))
+            .where(tx.amount > 0 if key.direction is Direction.IN else tx.amount < 0)
+            .options(selectinload(tx.classification))
+            .order_by(tx.transaction_date.desc(), tx.id.desc())
+            .limit(1)
+        )
+        if exclude_id is not None:
+            base = base.where(tx.id != exclude_id)
+        if key.account:
+            account = func.right(func.upper(func.regexp_replace(tx.counterparty_account, r"[^0-9A-Za-z]", "", "g")), len(key.account))
+            row = self.session.scalar(base.where(account == key.account))
+            if row is not None:
+                return row_to_domain(row)
+        if key.name:
+            row = self.session.scalar(base.where(or_(_folded(tx.counterparty_name) == key.name, _folded(tx.merchant) == key.name)))
+            if row is not None:
+                return row_to_domain(row)
+        return None
 
     def set_classification(self, transaction_id: int, classification: Classification) -> Transaction:
         self._write_classification(transaction_id, classification)
