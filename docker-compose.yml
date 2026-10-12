@@ -23,6 +23,22 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    build:
+      context: .
+      target: runtime
+    image: finbro-app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   finbro-pgdata:
     name: finbro-pgdata
