@@ -6,6 +6,8 @@ from functools import cached_property
 
 from sqlalchemy.orm import Session
 
+from finbro.db.repositories.imports import ImportRepository
+from finbro.db.repositories.reference import ReferenceRepository
 from finbro.db.repositories.settlements import SettlementRepository
 from finbro.db.repositories.transactions import TransactionRepository
 
@@ -23,6 +25,14 @@ class UnitOfWork:
     @cached_property
     def settlements(self) -> SettlementRepository:
         return SettlementRepository(self.session)
+
+    @cached_property
+    def reference(self) -> ReferenceRepository:
+        return ReferenceRepository(self.session)
+
+    @cached_property
+    def imports(self) -> ImportRepository:
+        return ImportRepository(self.session)
 
     def commit(self) -> None:
         self.session.commit()
