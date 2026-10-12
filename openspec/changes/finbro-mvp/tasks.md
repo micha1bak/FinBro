@@ -79,7 +79,7 @@
 
 ## 11. Integracja end-to-end
 
-- [ ] 11.1 Test end-to-end poniedziałkowego rozliczenia na danych syntetycznych: import → zatwierdzenie dochodów w skrzynce → dochód gotówkowy i inwentaryzacja → zamknięcie tygodnia → import kolejnego tygodnia z przelewami FinBro → status rozliczone. Weryfikacja: test przechodzi, a raport tygodniowy pokazuje oczekiwane przychody i wydatki.
+- [x] 11.1 Test end-to-end poniedziałkowego rozliczenia na danych syntetycznych: import → zatwierdzenie dochodów w skrzynce → dochód gotówkowy i inwentaryzacja → zamknięcie tygodnia → import kolejnego tygodnia z przelewami FinBro → status rozliczone. Weryfikacja: test przechodzi, a raport tygodniowy pokazuje oczekiwane przychody i wydatki.
 - [ ] 11.2 Ręczna próba na prawdziwym eksporcie XML użytkownika (poza repozytorium) w aplikacji uruchomionej przez `docker compose`: import, sprawdzenie parsowania opisów i deduplikacji przy ponownym imporcie. Weryfikacja: użytkownik potwierdza poprawność transakcji, a drugi import tego samego pliku daje 0 nowych.
 - [ ] 11.3 Sprawdzić trwałość danych w Dockerze: import i zamknięcie rozliczenia, potem `docker compose down` i `docker compose up -d`, potem przebudowa obrazu (`--build`), na koniec kopia `pg_dump` odtworzona na nowym wolumenie. Weryfikacja: po każdym kroku transakcje i rozliczenie są na miejscu, a migracje przy starcie nie zgłaszają błędów.
 

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<account-history>
+  <search>
+    <account>27 1020 1026 0000 1234 5678 9012</account>
+    <date since="2026-10-12" to="2026-10-18"/>
+    <filtering>Wszystkie</filtering>
+  </search>
+  <operations>
+    <operation>
+      <exec-date>2026-10-16</exec-date>
+      <order-date>2026-10-16</order-date>
+      <type>Przelew na konto</type>
+      <description>Rachunek nadawcy : 12 1140 2004 0000 3102 1234 5678 Nazwa nadawcy : KANCELARIA PRAWNA LEX SP. Z O.O. Tytuł : zgodnie z umową zlecenie 10/2026</description>
+      <amount curr="PLN">+3100.00</amount>
+      <ending-balance curr="PLN">+8545.86</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-14</exec-date>
+      <order-date>2026-10-14</order-date>
+      <type>Płatność kartą</type>
+      <description>000498849 74230786301 Lokalizacja : Adres : JMP S.A. BIEDRONKA 2422 Miasto : WARSZAWA Kraj : POLSKA Data wykonania operacji : 2026-10-14 Oryginalna kwota operacji : 61.20 PLN Numer karty : 425125******0042</description>
+      <amount curr="PLN">-61.20</amount>
+      <ending-balance curr="PLN">+5445.86</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-12</order-date>
+      <type>Przelew z rachunku</type>
+      <description>Rachunek odbiorcy : 71 1020 1097 0000 7777 8888 9999 Nazwa odbiorcy : PKO BP OBLIGACJE Tytuł : FinBro 2026-T41 Obligacje</description>
+      <amount curr="PLN">-719.48</amount>
+      <ending-balance curr="PLN">+5507.06</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-12</order-date>
+      <type>Przelew z rachunku</type>
+      <description>Rachunek odbiorcy : 52 1050 0000 3333 4444 5555 6666 Nazwa odbiorcy : X-TRADE BROKERS DM S.A. Tytuł : FinBro 2026-T41 XTB</description>
+      <amount curr="PLN">-719.48</amount>
+      <ending-balance curr="PLN">+6226.54</ending-balance>
+    </operation>
+    <operation>
+      <exec-date>2026-10-12</exec-date>
+      <order-date>2026-10-12</order-date>
+      <type>Przelew z rachunku</type>
+      <description>Rachunek odbiorcy : LT62 3250 0000 1111 2222 Nazwa odbiorcy : JAN TESTOWY REVOLUT Tytuł : FinBro 2026-T41 Wakacje</description>
+      <amount curr="PLN">-1438.96</amount>
+      <ending-balance curr="PLN">+6946.02</ending-balance>
+    </operation>
+  </operations>
+</account-history>
