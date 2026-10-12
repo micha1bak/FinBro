@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from datetime import UTC, date, datetime
 
+from finbro.domain.coverage import DateRange, uncovered
 from finbro.domain.enums import SettlementStatus, TxType
 from finbro.domain.money import Money
 from finbro.domain.periods import IsoWeek
@@ -20,7 +22,7 @@ from finbro.domain.settlement import (
     is_settled_income_date,
     line_state,
 )
-from finbro.domain.transactions import Classification, Transaction
+from finbro.domain.transactions import Classification, Direction, Transaction
 from finbro.services.uow import UnitOfWork
 
 
@@ -155,3 +157,59 @@ class SettlementService:
             paid_by_line=paid_by_line,
             carried_forward=later_closed,
         )
+
+    # --- zamknięcie ---
+
+    def warnings(self, week: IsoWeek) -> list[str]:
+        """Ostrzeżenia przed zamknięciem (nie blokują zamknięcia)."""
+        from finbro.services.importing import ImportService  # import lokalny: unika cyklu przez potok klasyfikacji
+
+        result = []
+        week_range = DateRange(week.start, week.end)
+        gaps = uncovered(ImportService(self.uow).covered_ranges(), week_range)
+        if gaps:
+            result.append(
+                "Tydzień nie jest w pełni pokryty importami konta głównego (brak: "
+                + ", ".join(g.label() for g in gaps)
+                + ")."
+            )
+        pending = [
+            t
+            for t in self.uow.transactions.unconfirmed()
+            if t.direction is Direction.IN and week.contains(t.transaction_date)
+        ]
+        if pending:
+            total = sum((t.amount for t in pending), Money.zero())
+            result.append(
+                f"W skrzynce są niezatwierdzone wpływy z tego tygodnia: {len(pending)} na {total.format()}."
+            )
+        if not self.uow.inventories.between(week.end, week.end):
+            result.append(f"Nie wykonano inwentaryzacji Portfela na koniec tygodnia ({week.end.isoformat()}).")
+        return result
+
+    def close(self, week: IsoWeek, today: date | None = None) -> WeekSettlement:
+        """Zamyka rozliczenie: zamraża linie w jednej transakcji z blokadą wiersza rozliczenia (D7)."""
+        today = today or date.today()
+        if today <= week.end:
+            raise SettlementError(f"Tydzień {week.label} jeszcze trwa; rozliczenie będzie dostępne od {week.next().start.isoformat()}.")
+        start_date = self.uow.reference.config().start_date
+        if start_date is None:
+            raise SettlementError("Ustaw datę startu rozliczeń w Ustawieniach.")
+        if week.end < start_date:
+            raise SettlementError(f"Tydzień {week.label} jest przed datą startu rozliczeń ({start_date.isoformat()}).")
+        try:
+            if self.uow.settlements.lock_week(week, exclusive=True) in CLOSED_STATUSES:
+                raise SettlementError(f"Rozliczenie {week.label} jest już zamknięte.")
+            computed = self.compute(week).settlement
+            self.uow.settlements.save_closed(
+                replace(computed, status=SettlementStatus.CLOSED, closed_at=datetime.now(UTC))
+            )
+            self.after_close(week)
+        except Exception:
+            self.uow.rollback()
+            raise
+        self.uow.commit()
+        return self.compute(week)
+
+    def after_close(self, week: IsoWeek) -> None:
+        """Kroki po zamknięciu w tej samej transakcji (dopasowanie przelewów, statusy)."""
