@@ -23,6 +23,15 @@ def format_basis_points(bp: int) -> str:
     return f"{whole},{frac:02d}".rstrip("0") + "%"
 
 
+def parse_percent(text: str) -> int:
+    """``12,5`` / ``12.5`` / ``50`` / ``50%`` -> punkty bazowe (1250 / 1250 / 5000 / 5000)."""
+    cleaned = text.strip().removesuffix("%").strip().replace(",", ".")
+    whole, _, frac = cleaned.partition(".")
+    if not whole.isdigit() or (frac and (not frac.isdigit() or len(frac) > 2)):
+        raise AllocationError(f"Niepoprawny udział procentowy: {text!r}")
+    return int(whole) * 100 + int(frac.ljust(2, "0") or "0")
+
+
 def validate_shares[K: Hashable](shares: Mapping[K, int], life: K) -> None:
     if life not in shares:
         raise AllocationError("Zestaw udziałów musi zawierać kopertę Życie.")

@@ -12,12 +12,15 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from finbro.config import load_dotenv
+from finbro.config import Settings, load_dotenv
 from finbro.db import migrate
 from finbro.db.session import make_engine, ping
+from finbro.web.app import create_app
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -84,3 +87,15 @@ def db_session(session_factory: sessionmaker[Session]) -> Iterator[Session]:
         yield session
     finally:
         session.close()
+
+
+@pytest.fixture
+def app(test_database_url: str, session_factory: sessionmaker[Session]) -> FastAPI:
+    """Aplikacja korzystająca z sesji w transakcji testu."""
+    return create_app(Settings(database_url=test_database_url), session_factory=session_factory)
+
+
+@pytest.fixture
+def client(app: FastAPI) -> Iterator[TestClient]:
+    with TestClient(app) as test_client:
+        yield test_client

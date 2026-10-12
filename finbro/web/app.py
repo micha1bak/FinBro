@@ -5,21 +5,21 @@ Uruchomienie: ``uvicorn finbro.web.app:create_app --factory``.
 
 from __future__ import annotations
 
-from pathlib import Path
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
 from finbro.config import Settings, load_dotenv
 from finbro.db.session import make_engine, make_session_factory, ping
+from finbro.web.admin import setup_admin
+from finbro.web.templating import WEB_DIR, templates
 
-WEB_DIR = Path(__file__).parent
-templates = Jinja2Templates(directory=WEB_DIR / "templates")
 
-
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, session_factory: Callable[..., Any] | None = None) -> FastAPI:
+    """Tworzy aplikację. ``session_factory`` pozwala testom podać sesje w transakcji testu."""
     if settings is None:
         load_dotenv()
         settings = Settings.from_env()
@@ -29,8 +29,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="FinBro", docs_url=None, redoc_url=None)
     app.state.settings = settings
     app.state.engine = engine
-    app.state.session_factory = make_session_factory(engine)
+    app.state.session_factory = session_factory or make_session_factory(engine)
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
+    setup_admin(app, engine, app.state.session_factory)
 
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request) -> HTMLResponse:

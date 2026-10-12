@@ -8,6 +8,7 @@ from finbro.domain.allocation import (
     AllocationError,
     AllocationPlan,
     format_basis_points,
+    parse_percent,
     plan_for_date,
     split_amount,
     validate_shares,
@@ -61,6 +62,17 @@ def test_format_basis_points():
     assert format_basis_points(5000) == "50%"
     assert format_basis_points(9500) == "95%"
     assert format_basis_points(3333) == "33,33%"
+
+
+@pytest.mark.parametrize(("text", "bp"), [("12,5", 1250), ("12.5", 1250), ("50", 5000), (" 25 % ", 2500), ("0", 0), ("33,33", 3333)])
+def test_parse_percent(text, bp):
+    assert parse_percent(text) == bp
+
+
+@pytest.mark.parametrize("text", ["", "abc", "12,555", "-5", "1,2,3"])
+def test_parse_percent_rejects_invalid(text):
+    with pytest.raises(AllocationError):
+        parse_percent(text)
 
 
 def test_plan_for_date_uses_plan_effective_on_that_day():
