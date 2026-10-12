@@ -7,12 +7,13 @@ from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
 
+from finbro.domain.classification import ClassificationError
 from finbro.domain.enums import ProposalSource, TxSource, TxType
 from finbro.domain.money import Money
 from finbro.domain.transactions import Classification, Transaction, TransactionData
 
 
-class ReceivableError(ValueError):
+class ReceivableError(ClassificationError):
     """Operacja na należności niezgodna z saldem dłużnika."""
 
 

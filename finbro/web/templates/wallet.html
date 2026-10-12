@@ -51,6 +51,27 @@
     <button type="submit">Zapisz wydatek</button>
   </form>
 
+  <form method="post" action="/wallet/receivable" class="panel">
+    <h2>Pożyczka lub spłata gotówką</h2>
+    <p class="muted">Zmienia saldo dłużnika i stan Portfela; nie jest ani wydatkiem, ani dochodem.</p>
+    <label>Rodzaj
+      <select name="kind">
+        <option value="loan">pożyczka (daję gotówkę)</option>
+        <option value="repayment">spłata (dostaję gotówkę)</option>
+      </select>
+    </label>
+    <label>Dłużnik
+      <select name="debtor_id">
+        <option value="">—</option>
+        {% for d in debtors %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>albo nowy dłużnik <input type="text" name="new_debtor_name"></label>
+    <label>Data <input type="date" name="date" value="{{ today.isoformat() }}" required></label>
+    <label>Kwota <input type="text" name="amount" inputmode="decimal" required></label>
+    <button type="submit">Zapisz</button>
+  </form>
+
   <form method="post" action="/wallet/opening" class="panel">
     <h2>Stan początkowy</h2>
     <p class="muted">Gotówka na dzień startu FinBro. Nie jest ani przychodem, ani wydatkiem.</p>

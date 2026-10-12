@@ -75,3 +75,4 @@ table.inbox td.actions form.inline { margin-bottom: 0.3rem; }
 .panel label { display: block; }
 .panel input[type="text"], .panel select { width: 100%; }
 .filters { display: flex; flex-wrap: wrap; align-items: end; gap: 0.25rem 0.5rem; margin-bottom: 1rem; }
+.suggestion { margin-top: 0.4rem; padding: 0.3rem 0.5rem; background: #eef6f3; border-radius: 3px; }

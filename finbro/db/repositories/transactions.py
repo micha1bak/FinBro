@@ -185,6 +185,18 @@ class TransactionRepository:
             )
         return [row_to_domain(r) for r in self.session.scalars(stmt)]
 
+    def debtor_related(self) -> list[Transaction]:
+        """Zatwierdzone transakcje powiązane z dłużnikami (pożyczki, spłaty, darowania)."""
+        tx, cl = models.Transaction, models.Classification
+        stmt = (
+            select(tx)
+            .join(cl, cl.transaction_id == tx.id)
+            .where(cl.confirmed.is_(True), cl.debtor_id.is_not(None))
+            .options(selectinload(tx.classification))
+            .order_by(tx.transaction_date, tx.id)
+        )
+        return [row_to_domain(r) for r in self.session.scalars(stmt)]
+
     def wallet_related(self, wallet_account_id: int) -> list[Transaction]:
         """Transakcje Portfela oraz zatwierdzone transfery z udziałem Portfela na innych kontach."""
         tx, cl = models.Transaction, models.Classification

@@ -13,6 +13,7 @@ from finbro.domain.classification import ClassificationError
 from finbro.domain.enums import ProposalSource, TxType
 from finbro.domain.transactions import Transaction
 from finbro.services.classification import ClassificationService
+from finbro.services.receivables import ReceivablesService
 from finbro.services.uow import UnitOfWork
 from finbro.web.deps import get_uow
 from finbro.web.forms import decision_from_form, form_context, is_htmx
@@ -28,8 +29,16 @@ def render_row(request: Request, uow: UnitOfWork, tx: Transaction, error: str | 
 
 
 def inbox_extras(uow: UnitOfWork, items: list[Transaction]) -> dict[str, Any]:
-    """Dodatkowe dane skrzynki; rozszerzane przez kolejne funkcje (należności, kolejka LLM)."""
-    return {"queued_ids": uow.llm_jobs.queued_transaction_ids()}
+    """Stan kolejki LLM i podpowiedzi spłat od dłużników dla pozycji skrzynki."""
+    receivables = ReceivablesService(uow)
+    balances = receivables.balances()
+    suggestions = {}
+    if balances:
+        for tx in items:
+            match = receivables.suggest_repayment(tx, balances)
+            if match is not None:
+                suggestions[tx.id] = match
+    return {"queued_ids": uow.llm_jobs.queued_transaction_ids(), "repayment_suggestions": suggestions}
 
 
 @router.get("/inbox", response_class=HTMLResponse)

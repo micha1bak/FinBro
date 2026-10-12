@@ -106,7 +106,20 @@ def _inventory(service: WalletService, form: Mapping[str, Any]) -> str:
     return "Stan zgodny z oczekiwanym"
 
 
+def _cash_receivable(service: WalletService, form: Mapping[str, Any]) -> str:
+    amount = Money.parse(form["amount"])
+    day = parse_date(form.get("date"), date.today())
+    debtor = form.get("debtor_id")
+    args = (day, amount, int(debtor) if debtor else None, form.get("new_debtor_name"), form.get("note"))
+    if form.get("kind") == "repayment":
+        service.add_cash_repayment(*args)
+        return f"Zapisano spłatę gotówkową {amount.format()}"
+    service.add_cash_loan(*args)
+    return f"Zapisano pożyczkę gotówkową {amount.format()}"
+
+
 form_route("/wallet/opening", _opening)
+form_route("/wallet/receivable", _cash_receivable)
 form_route("/wallet/inventory", _inventory)
 form_route("/wallet/income", _income)
 form_route("/wallet/expense", _expense)

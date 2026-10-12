@@ -51,7 +51,7 @@
 ## 7. Należności
 
 - [x] 7.1 Zaimplementować w domenie saldo dłużnika, spłaty częściowe, odrzucenie spłaty większej niż saldo, darowanie (generujące WYDATEK w wybranej kategorii) i datę najstarszej niespłaconej pożyczki (spłaty rozliczane od najstarszych). Weryfikacja: testy jednostkowe scenariuszy ze spec `receivables`.
-- [ ] 7.2 Połączyć należności z klasyfikacją (POŻYCZKA/SPŁATA z dłużnikiem, podpowiedź spłaty dla wpływu od dłużnika) i z Portfelem (pożyczki i spłaty gotówkowe). Weryfikacja: test integracyjny, w którym wpływ od osoby z saldem 1290,00 zł pokazuje w skrzynce propozycję SPŁATY z saldem.
+- [x] 7.2 Połączyć należności z klasyfikacją (POŻYCZKA/SPŁATA z dłużnikiem, podpowiedź spłaty dla wpływu od dłużnika) i z Portfelem (pożyczki i spłaty gotówkowe). Weryfikacja: test integracyjny, w którym wpływ od osoby z saldem 1290,00 zł pokazuje w skrzynce propozycję SPŁATY z saldem.
 - [ ] 7.3 Dodać widok należności (lista dłużników z saldem i datą najstarszej pożyczki, suma, historia dłużnika, akcja "daruj"). Weryfikacja: test `TestClient` dla sumy 1440,00 zł i darowania zmieniającego saldo na 0,00 zł.
 
 ## 8. Lokalny model językowy

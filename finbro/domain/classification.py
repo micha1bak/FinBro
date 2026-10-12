@@ -62,15 +62,18 @@ def check_category_choice(category: Category, *, chosen_by_user: bool) -> None:
         raise ClassificationError(f"Kategoria „{category.name}” jest nieaktywna.")
 
 
-def normalized(classification: Classification) -> Classification:
-    """Usuwa pola, które nie dotyczą danego typu (np. kategorię przy TRANSFERZE)."""
+def normalized(classification: Classification, keep_debtor: bool = False) -> Classification:
+    """Usuwa pola, które nie dotyczą danego typu (np. kategorię przy TRANSFERZE).
+
+    ``keep_debtor`` zachowuje dłużnika przy wydatku z darowania długu.
+    """
     t = classification.type
     if t is None:
         return classification
     return replace(
         classification,
         category_id=classification.category_id if t in REQUIRES_CATEGORY else None,
-        debtor_id=classification.debtor_id if t in REQUIRES_DEBTOR else None,
+        debtor_id=classification.debtor_id if t in REQUIRES_DEBTOR or keep_debtor else None,
         transfer_kind=(classification.transfer_kind or TransferKind.OTHER) if t is TxType.TRANSFER else None,
         envelope_id=classification.envelope_id if t is TxType.ODKLADANIE else None,
     )

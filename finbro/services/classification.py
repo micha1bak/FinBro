@@ -12,10 +12,11 @@ from finbro.domain.classification import (
     check_classification,
     normalized,
 )
-from finbro.domain.enums import ProposalSource, TransferKind, TxType
+from finbro.domain.enums import ProposalSource, TransferKind, TxSource, TxType
 from finbro.domain.history import CounterpartyKey
 from finbro.domain.rules import Rule, RuleConditions, RuleResult
 from finbro.domain.transactions import Classification, Transaction
+from finbro.services.receivables import ReceivablesService
 from finbro.services.uow import UnitOfWork
 
 USER_RULE_PRIORITY = 50
@@ -71,7 +72,7 @@ class ClassificationService:
         return self._now or datetime.now(UTC)
 
     def _validate(self, tx: Transaction, classification: Classification, chosen_by_user: bool) -> Classification:
-        classification = normalized(classification)
+        classification = normalized(classification, keep_debtor=tx.data.source is TxSource.FORGIVENESS)
         check_classification(tx.direction, classification)
         if classification.category_id is not None and classification.type in (TxType.WYDATEK, TxType.ZWROT, TxType.ROZLICZENIE):
             category = next((c for c in self.uow.reference.categories() if c.id == classification.category_id), None)
@@ -95,7 +96,8 @@ class ClassificationService:
         return updated
 
     def before_confirm(self, tx: Transaction, final: Classification) -> None:
-        """Miejsce na skutki zatwierdzenia w tej samej transakcji (rozliczenia, należności)."""
+        """Kontrole i skutki zatwierdzenia w tej samej transakcji bazodanowej."""
+        ReceivablesService(self.uow).check_change(tx, final)
 
     def accept_proposal(self, transaction_id: int) -> Transaction:
         tx = self.uow.transactions.get(transaction_id)

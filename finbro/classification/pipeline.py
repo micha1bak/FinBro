@@ -6,10 +6,11 @@ from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 
-from finbro.domain.classification import is_auto_accepted, normalized
+from finbro.domain.classification import ClassificationError, is_auto_accepted, normalized
 from finbro.domain.history import CounterpartyKey, history_proposal
 from finbro.domain.rules import Rule, first_match
 from finbro.domain.transactions import Classification, Transaction
+from finbro.services.receivables import ReceivablesService
 from finbro.services.uow import UnitOfWork
 
 
@@ -59,6 +60,11 @@ class ClassificationPipeline:
             else:
                 by_history += 1
             final = accept_if_allowed(tx, proposal)
+            if final.confirmed and final.debtor_id is not None:
+                try:
+                    ReceivablesService(self.uow).check_change(tx, final)
+                except ClassificationError:
+                    final = replace(final, confirmed=False, confirmed_at=None)
             accepted += final.confirmed
             self.uow.transactions.set_classification(tx.id, final)
         self.uow.llm_jobs.enqueue(to_queue)

@@ -151,3 +151,30 @@ class WalletService:
             note,
             Classification(type=TxType.WYDATEK, category_id=category_id, source=ProposalSource.USER),
         )
+
+    def _debtor_id(self, debtor_id: int | None, new_debtor_name: str | None) -> int:
+        if debtor_id is not None:
+            return debtor_id
+        name = (new_debtor_name or "").strip()
+        if not name:
+            raise WalletError("Wybierz dłużnika albo wpisz nowego.")
+        debtor = self.uow.reference.debtor_by_name(name) or self.uow.reference.add_debtor(name)
+        return debtor.id
+
+    def add_cash_loan(
+        self, day: date, amount: Money, debtor_id: int | None, new_debtor_name: str | None = None, note: str | None = None
+    ) -> Transaction:
+        """Pożyczka gotówkowa: zwiększa saldo dłużnika i zmniejsza stan Portfela, nie jest wydatkiem."""
+        debtor = self._debtor_id(debtor_id, new_debtor_name)
+        return self._add_confirmed(
+            day, -positive(amount), note, Classification(type=TxType.POZYCZKA, debtor_id=debtor, source=ProposalSource.USER)
+        )
+
+    def add_cash_repayment(
+        self, day: date, amount: Money, debtor_id: int | None, new_debtor_name: str | None = None, note: str | None = None
+    ) -> Transaction:
+        """Spłata gotówkowa: zmniejsza saldo dłużnika i zwiększa stan Portfela, nie jest dochodem."""
+        debtor = self._debtor_id(debtor_id, new_debtor_name)
+        return self._add_confirmed(
+            day, positive(amount), note, Classification(type=TxType.SPLATA, debtor_id=debtor, source=ProposalSource.USER)
+        )
