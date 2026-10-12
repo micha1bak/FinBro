@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, selectinload
 
@@ -132,3 +132,11 @@ class SettlementRepository:
             )
             for r in rows
         ]
+
+    def paid_by_line(self) -> dict[int, Money]:
+        rows = self.session.execute(
+            select(models.SettlementPayment.settlement_line_id, func.sum(models.SettlementPayment.amount)).group_by(
+                models.SettlementPayment.settlement_line_id
+            )
+        )
+        return {line_id: Money(int(total)) for line_id, total in rows}

@@ -185,6 +185,18 @@ class TransactionRepository:
             )
         return [row_to_domain(r) for r in self.session.scalars(stmt)]
 
+    def incomes_for_settlement_week(self, week_start: date) -> list[Transaction]:
+        """Zatwierdzone dochody przypisane do rozliczenia danego tygodnia (D7)."""
+        tx, cl = models.Transaction, models.Classification
+        stmt = (
+            select(tx)
+            .join(cl, cl.transaction_id == tx.id)
+            .where(cl.confirmed.is_(True), cl.type == TxType.DOCHOD, cl.settlement_week == week_start)
+            .options(selectinload(tx.classification))
+            .order_by(tx.transaction_date, tx.id)
+        )
+        return [row_to_domain(r) for r in self.session.scalars(stmt)]
+
     def recent_user_decisions(self, direction: Direction, limit: int) -> list[Transaction]:
         """Ostatnie decyzje użytkownika w danym kierunku: przykłady dla modelu językowego."""
         tx, cl = models.Transaction, models.Classification
