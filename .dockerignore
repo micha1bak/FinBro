@@ -1,0 +1,33 @@
+# Do obrazu trafia tylko kod aplikacji, migracje i testy z syntetycznymi fixture'ami.
+
+# --- Środowisko i narzędzia ---
+.venv
+.git
+.gitattributes
+.idea
+.claude
+openspec
+**/__pycache__
+**/*.py[cod]
+*.egg-info
+.pytest_cache
+.hypothesis
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+
+# --- Sekrety ---
+.env
+.env.*
+
+# --- Dane finansowe: wyciągi i kopie bazy ---
+backups/
+**/*.xml
+**/*.csv
+**/*.xls
+**/*.xlsx
+**/*.dump
+# Syntetyczne fixture'y testowe są potrzebne do uruchamiania testów w kontenerze
+!tests/fixtures/
+!tests/fixtures/**
