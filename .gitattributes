@@ -1,0 +1,7 @@
+# Końce linii LF w repozytorium i katalogu roboczym: pliki trafiają do kontenerów Linuksa
+# (skrypty .sh, Dockerfile), gdzie CRLF psuje ich wykonanie.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
