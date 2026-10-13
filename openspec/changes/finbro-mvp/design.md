@@ -119,7 +119,7 @@ Reguły akceptacji (spec `transaction-classification`):
 Interfejs `Classifier.classify(tx_view, context) -> Suggestion | None`. Implementacja wywołuje `POST {LLM_URL}/chat/completions` (API zgodne z OpenAI) pod konfigurowalnym adresem: domyślnie Docker Model Runner (z kontenera `http://model-runner.docker.internal/engines/v1`, z hosta `http://127.0.0.1:12434/engines/v1`). Odpowiedź jest ograniczona parametrem `response_format` typu `json_schema`, gdzie typ, kategoria i dłużnik są enumami z dozwolonych wartości. Tryb rozumowania modelu wyłączamy (`chat_template_kwargs.enable_thinking = false`), bo bez niego odpowiedź przychodzi kilkukrotnie szybciej. Ten sam klient działa z Ollamą (`http://<host>:11434/v1`). Sprawdziliśmy, że API Docker Model Runner w stylu Ollamy (`/api/chat`) ignoruje schemat w polu `format`, a endpoint zgodny z OpenAI go przestrzega. Odpowiedź spoza dozwolonych wartości traktujemy jak brak propozycji.
 
 `tx_view` budujemy wyłącznie z dozwolonych pól (spec "Minimalizacja danych"). Z tytułu dodatkowo wycinamy ciągi cyfr wyglądające na numery telefonów, rachunków i kart. Prompt jest krótki, ze stałym prefiksem (kategorie, dłużnicy, kilka przykładów z historii), co pozwala korzystać z cache'u prefiksu po stronie serwera modelu.
-- Konkretny model wybieramy w spike'u (zadanie 8.1): 2–4 kandydatów (m.in. Bielik jako model polskojęzyczny oraz mały model ogólny), mierzymy czas na transakcję i trafność na syntetycznym zestawie ~30 transakcji.
+- Model wybraliśmy w spike'u (zadanie 8.1, `docs/llm-spike.md`): `ai/gemma4:E2B` na CPU, około 16 s na transakcję, trafny typ w 90–93% i kategoria w około 80% przypadków syntetycznego zestawu.
 
 ### D11. PostgreSQL: konfiguracja i konwencje
 - **Wersja:** oficjalny obraz `postgres` z przypiętą wersją główną (aktualna stabilna, weryfikowana w zadaniu 1.1). Zmiana wersji głównej wymaga dump/restore, więc przypinamy ją jawnie, a nie używamy `latest`.
@@ -184,5 +184,5 @@ Reguły startowe (bankomat i wpłatomat → TRANSFER Portfela, "Przelew z karty"
 
 ## Otwarte pytania
 
-- Który model lokalny wybrać. To rozstrzygnie spike (zadanie 8.1) bez wpływu na specyfikacje.
+- ~~Który model lokalny wybrać.~~ Rozstrzygnięte w spike'u (zadanie 8.1): `ai/gemma4:E2B` przez Docker Model Runner.
 - Czy SQLAdmin jest aktywnie utrzymywany dla aktualnych wersji SQLAlchemy i FastAPI. Jeśli nie, panel CRUD powstaje jako proste widoki Jinja2, a zakres funkcji się nie zmienia.

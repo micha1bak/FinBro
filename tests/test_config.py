@@ -1,6 +1,6 @@
 import pytest
 
-from finbro.config import DEFAULT_LLM_URL, ConfigError, Settings, load_dotenv
+from finbro.config import DEFAULT_LLM_MODEL, DEFAULT_LLM_URL, ConfigError, Settings, load_dotenv
 
 
 def test_reads_all_variables():
@@ -16,9 +16,10 @@ def test_reads_all_variables():
     assert settings.llm_model == "ai/gemma4:E2B"
 
 
-def test_llm_url_has_default():
-    settings = Settings.from_env({"DATABASE_URL": "postgresql+psycopg://u:p@h/db"})
+def test_llm_url_and_model_have_defaults():
+    settings = Settings.from_env({"DATABASE_URL": "postgresql+psycopg://u:p@h/db", "LLM_MODEL": ""})
     assert settings.llm_url == DEFAULT_LLM_URL
+    assert settings.llm_model == DEFAULT_LLM_MODEL == "ai/gemma4:E2B"
 
 
 @pytest.mark.parametrize("environ", [{}, {"DATABASE_URL": "  "}])

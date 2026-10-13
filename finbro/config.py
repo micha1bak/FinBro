@@ -9,7 +9,8 @@ from pathlib import Path
 
 # Docker Model Runner widziany z hosta (praca w .venv); kontener aplikacji dostaje adres z docker-compose.yml.
 DEFAULT_LLM_URL = "http://127.0.0.1:12434/engines/v1"
-DEFAULT_LLM_MODEL = ""
+# Model wybrany w spike'u (docs/llm-spike.md); można go zmienić w .env albo w panelu ustawień.
+DEFAULT_LLM_MODEL = "ai/gemma4:E2B"
 
 
 class ConfigError(RuntimeError):

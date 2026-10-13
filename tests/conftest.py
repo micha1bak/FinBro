@@ -95,7 +95,9 @@ def db_session(session_factory: sessionmaker[Session]) -> Iterator[Session]:
 @pytest.fixture
 def app(test_database_url: str, session_factory: sessionmaker[Session]) -> FastAPI:
     """Aplikacja korzystająca z sesji w transakcji testu."""
-    return create_app(Settings(database_url=test_database_url), session_factory=session_factory, start_worker=False)
+    # Bez modelu językowego: testy, które go potrzebują, ustawiają model w ustawieniach aplikacji.
+    settings = Settings(database_url=test_database_url, llm_model="")
+    return create_app(settings, session_factory=session_factory, start_worker=False)
 
 
 @pytest.fixture
