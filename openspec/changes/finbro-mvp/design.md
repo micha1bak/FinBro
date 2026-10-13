@@ -86,7 +86,7 @@ Unikalne ograniczenie w bazie. `occurrence` to numer wystąpienia tego samego od
 - `WalletInventory` (data, stan faktyczny, stan oczekiwany, wygenerowana transakcja).
 - `ImportBatch` (plik, zakres dat, liczniki) do pokrycia okresów i podsumowań.
 - `LlmJob` (transakcja, status, próby, błąd), czyli kolejka zadań dla klasyfikatora.
-- `Settings`: data startu, numer konta głównego, adres Ollamy, nazwa modelu.
+- `Settings`: data startu, numer konta głównego, nazwa modelu (adres serwera modelu pochodzi wyłącznie ze zmiennej `LLM_URL`).
 
 ### D7. Rozliczenie: zamrażanie wyników i korekty przez `settlement_week`
 Przy zatwierdzeniu dochodu ustawiamy `settlement_week` = tydzień jego daty, jeśli rozliczenie tego tygodnia nie jest zamknięte. W przeciwnym razie ustawiamy najbliższy niezamknięty tydzień (korekta). Przeklasyfikowanie dochodu z zamkniętego tygodnia tworzy ujemną pozycję korekty w najbliższym niezamkniętym tygodniu.
@@ -143,20 +143,18 @@ services:
            env z .env (POSTGRES_USER/PASSWORD/DB), healthcheck: pg_isready
            skrypt init tworzy dodatkowo bazę finbro_test
   app      build: .                           port "127.0.0.1:8000:8000"
-           env: DATABASE_URL, OLLAMA_URL=http://ollama:11434
+           env: DATABASE_URL, LLM_URL=http://model-runner.docker.internal/engines/v1, LLM_MODEL
            depends_on: db (condition: service_healthy)
            start: alembic upgrade head && uvicorn ... --host 0.0.0.0 --workers 1
-  ollama   image: ollama/ollama  (profil "llm")                           wolumen ollama-models:/root/.ollama
-           bez publikowania portu na hoście
 ```
 - **Dockerfile:** obraz `python:3.13-slim`, instalacja zależności z `pyproject.toml` w osobnej warstwie (cache), użytkownik bez uprawnień roota, `HEALTHCHECK` na endpoint `/health` (sprawdzający też połączenie z bazą).
 - **Porty tylko na loopback hosta.** Wewnątrz kontenerów serwery słuchają na `0.0.0.0`. Ograniczenie dostępu zapewnia publikacja `127.0.0.1:...`. Port bazy jest opublikowany, żeby aplikacja i testy uruchamiane z `.venv` mogły się z nią łączyć.
 - **Kolejność startu:** `depends_on` z `service_healthy` sprawia, że migracje startują dopiero przy gotowej bazie.
 - **Jeden worker Uvicorna.** Worker LLM z D9 to wątek w procesie aplikacji. Jeden proces wystarcza dla jednego użytkownika i upraszcza zarządzanie zasobami CPU.
 - **Kopie zapasowe:** `pg_dump -Fc` wykonywany wewnątrz kontenera do pliku, potem `docker compose cp` na hosta (do `backups/`). Przywracanie przez `pg_restore --clean`. Nie przekierowujemy wyjścia `pg_dump` przez `>` w PowerShellu, bo zmienia on kodowanie strumienia i psuje binarny dump.
-- **Ollama jako opcjonalny profil.** `docker compose up` uruchamia bazę i aplikację, a `docker compose --profile llm up` także model. Bez profilu klasyfikacja kończy się na regułach i historii (spec: "Model niedostępny"). Pobranie modelu: `docker compose exec ollama ollama pull <model>`.
+- **Model przez Docker Model Runner, bez trzeciego kontenera.** DMR jest częścią Docker Desktop: uruchamia llama.cpp bezpośrednio w Windows (poza maszyną WSL2 i jej limitem pamięci), a kontenery osiągają go pod `http://model-runner.docker.internal`. Model pobiera się raz poleceniem `docker model pull <model>` i ładuje do pamięci przy pierwszym zapytaniu. Na tym laptopie DMR musi działać na CPU: przy akceleracji Vulkan na zintegrowanym GPU (512 MB pamięci) ładowanie modelu kończy się błędem `ErrorOutOfDeviceMemory`. Bez włączonego DMR albo bez modelu klasyfikacja kończy się na regułach i historii (spec: "Model niedostępny"). API DMR nie ma uwierzytelnienia, ale jest osiągalne tylko lokalnie. Odrzucona alternatywa: kontener `ollama/ollama` w profilu `llm` (obraz 9,4 GB na dysku, model liczony w maszynie WSL2 z limitem ~7,4 GB).
 - **Praca deweloperska** w `.venv` (szybkie testy, debugowanie w PyCharmie) z bazą z compose: `docker compose up -d db`, a potem aplikacja i `pytest` lokalnie. Testy można też uruchomić w kontenerze: `docker compose run --rm tests pytest` (usługa `tests` w profilu `test`, obraz z etapu `dev` z zależnościami deweloperskimi; obraz aplikacji ich nie zawiera).
-- *Alternatywa:* Ollama zainstalowana natywnie w Windows, osiągana z kontenera przez `host.docker.internal`. Na CPU wydajność jest zbliżona, ale konfiguracja się rozdwaja. Zostawiamy jako opcję: wystarczy zmienić `OLLAMA_URL`.
+- *Alternatywa:* Ollama (natywnie w Windows albo w kontenerze), osiągana pod `http://host.docker.internal:11434/v1`. Wystarczy zmienić `LLM_URL` i `LLM_MODEL`, bo klient używa API zgodnego z OpenAI.
 
 ### D14. Reguły początkowe jako dane
 Reguły startowe (bankomat i wpłatomat → TRANSFER Portfela, "Przelew z karty" + Revolut → TRANSFER budżet rodzinny, tytuł FinBro → ODKŁADANIE) tworzy migracja danych jako zwykłe, edytowalne reguły. Regułę refundacji od rodziny użytkownik dodaje sam, bo nadawcy to jego dane. Rozpoznanie tytułu FinBro (D8) jest dodatkowo wbudowane w logikę rozliczenia, więc działa nawet po usunięciu reguły.
@@ -172,7 +170,7 @@ Reguły startowe (bankomat i wpłatomat → TRANSFER Portfela, "Przelew z karty"
 - **[Utrata danych przy usuwaniu wolumenu]** `docker compose down -v` albo czyszczenie Docker Desktop usuwa wolumen `finbro-pgdata`. → README opisuje kopię zapasową i przywracanie, a test end-to-end (11.3) sprawdza, że dane przeżywają `down`/`up` bez `-v`.
 - **[Aktualizacja wersji głównej PostgreSQL]** Nowy obraz z inną wersją główną nie odczyta starego katalogu danych. → Wersja główna przypięta w compose. Procedura aktualizacji przez `pg_dump`/`pg_restore` opisana w README.
 - **[Baza musi działać do pracy i testów]** Bez uruchomionego kontenera `db` nie działają ani aplikacja, ani testy integracyjne. → Czytelny komunikat błędu z instrukcją, a testy domeny działają bez bazy.
-- **[Za mało pamięci w WSL2]** Domyślny limit to ~8 GB, które dzielą PostgreSQL (zwykle kilkaset MB przy tej skali danych) i model. → Spike (8.1) mierzy zużycie pamięci przy działającej bazie. Modele do ~8B w kwantyzacji 4-bitowej się mieszczą. Jeśli trzeba więcej, użytkownik sam zwiększa limit w `.wslconfig` (aplikacja nie zmienia ustawień systemu).
+- **[Pamięć dla modelu]** Docker Model Runner działa poza maszyną WSL2, więc model nie dzieli jej limitu (~8 GB) z PostgreSQL, tylko korzysta z pamięci Windows. → Spike (8.1) mierzy zużycie pamięci procesu modelu. Aplikacja nie zmienia ustawień systemu.
 - **[Kompromis: brak dzielenia transakcji]** Wpływ, który jest częściowo spłatą, a częściowo dochodem, trzeba sklasyfikować jako jedno albo drugie. Spłata większa niż saldo jest odrzucana. → Rzadki przypadek, poza MVP.
 
 ## Plan wdrożenia
@@ -180,7 +178,7 @@ Reguły startowe (bankomat i wpłatomat → TRANSFER Portfela, "Przelew z karty"
 1. Skopiować `.env.example` do `.env` i ustawić hasło bazy.
 2. `docker compose up -d --build`. Baza startuje pierwsza, a aplikacja po jej gotowości wykonuje `alembic upgrade head`, które tworzy schemat, kategorie, reguły startowe i plan 50/12,5/12,5/25. Aplikacja jest pod `http://127.0.0.1:8000`.
 3. Pierwsze uruchomienie: w panelu admina użytkownik ustawia datę startu, numer konta głównego, rachunki docelowe kopert (Revolut, XTB, rachunek rejestrowy obligacji) i stan początkowy Portfela.
-4. Opcjonalnie: `docker compose --profile llm up -d` i `docker compose exec ollama ollama pull <model wybrany w spike'u>`. Bez tego klasyfikacja kończy się na regułach i historii.
+4. Opcjonalnie: włączyć Docker Model Runner w Docker Desktop (na CPU) i pobrać model wybrany w spike'u (`docker model pull <model>`). Bez tego klasyfikacja kończy się na regułach i historii.
 5. Aktualizacja: `docker compose up -d --build`. Migracje wykonają się przy starcie, dane zostają w wolumenie `finbro-pgdata`.
 6. Wycofanie zmian: `docker compose down` (bez `-v`). Dane zostają w wolumenie. Powrót do poprzedniej wersji aplikacji z zachowaniem danych wymaga `alembic downgrade` do odpowiedniej rewizji albo odtworzenia kopii z `pg_dump`.
 

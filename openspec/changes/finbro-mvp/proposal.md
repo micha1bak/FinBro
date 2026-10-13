@@ -34,7 +34,7 @@ Brak. Projekt nie ma jeszcze żadnych specyfikacji.
 
 - Nowy kod w Pythonie 3.13 (istniejące, puste `.venv` do pracy deweloperskiej). Stos: FastAPI, SQLAlchemy 2.0 (psycopg 3), Alembic, SQLAdmin, Jinja2 + HTMX, Chart.js, pytest. Baza danych: PostgreSQL (także w testach integracyjnych), bez SQLite.
 - Uruchamianie: `Dockerfile` aplikacji i `docker-compose.yml` z usługami PostgreSQL i aplikacji (Docker Desktop z WSL2 jest już zainstalowany). Dane w wolumenie Dockera, porty udostępnione tylko na `127.0.0.1`.
-- Nowa zależność uruchomieniowa: Ollama z lokalnym modelem językowym jako opcjonalna usługa w `docker compose` (aplikacja działa bez niej). Konkretny model zostanie wybrany w spike'u pod kątem sprzętu użytkownika (16 GB RAM, CPU bez dedykowanego GPU).
+- Nowa zależność uruchomieniowa: lokalny model językowy przez Docker Model Runner (część Docker Desktop) jako opcja (aplikacja działa bez niego). Konkretny model zostanie wybrany w spike'u pod kątem sprzętu użytkownika (16 GB RAM, CPU bez dedykowanego GPU).
 - Testy kluczowej logiki są obowiązkową częścią każdego zadania implementacyjnego (zasada zapisana w konfiguracji OpenSpec projektu).
 - Dane finansowe i dane osób trzecich zostają wyłącznie na komputerze użytkownika. Wyciągi bankowe nie mogą trafić do repozytorium.
 - Zmiana w procesie użytkownika: przelewy na Revolut (wakacje) są wykonywane przelewem na IBAN z tytułem wygenerowanym przez FinBro, a doładowania kartą służą wyłącznie budżetowi rodzinnemu.
