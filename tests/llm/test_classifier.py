@@ -9,7 +9,7 @@ from finbro.domain.classification import types_for
 from finbro.llm.classifier import (
     ClassifierContext,
     ClassifierUnavailable,
-    OllamaClassifier,
+    LlmClassifier,
     classify_or_none,
     response_schema,
 )
@@ -24,17 +24,18 @@ CONTEXT = ClassifierContext(
 )
 
 
-def classifier_with(handler) -> OllamaClassifier:
-    return OllamaClassifier("http://ollama:11434", "test-model", transport=httpx.MockTransport(handler))
+def classifier_with(handler) -> LlmClassifier:
+    return LlmClassifier("http://model-runner.docker.internal/engines/v1", "test-model", transport=httpx.MockTransport(handler))
 
 
 def answering(content: dict | str, status: int = 200):
     requests = []
 
     def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/engines/v1/chat/completions"
         requests.append(json.loads(request.content))
         body = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
-        return httpx.Response(status, json={"message": {"role": "assistant", "content": body}})
+        return httpx.Response(status, json={"choices": [{"index": 0, "message": {"role": "assistant", "content": body}}]})
 
     return handler, requests
 
@@ -49,10 +50,13 @@ def test_valid_answer_becomes_llm_proposal():
     assert not proposal.confirmed
 
     [sent] = requests
-    assert sent["model"] == "test-model" and sent["stream"] is False
-    assert sent["format"] == response_schema(CONTEXT)
-    assert sent["format"]["properties"]["type"]["enum"] == ["WYDATEK", "ODKLADANIE", "TRANSFER", "POZYCZKA"]
-    assert sent["format"]["properties"]["category"]["enum"] == ["Spożywcze", "Rozrywka i hobby", None]
+    assert sent["model"] == "test-model" and sent["stream"] is False and sent["temperature"] == 0
+    assert sent["chat_template_kwargs"] == {"enable_thinking": False}
+    schema = sent["response_format"]["json_schema"]["schema"]
+    assert sent["response_format"]["type"] == "json_schema"
+    assert schema == response_schema(CONTEXT)
+    assert schema["properties"]["type"]["enum"] == ["WYDATEK", "ODKLADANIE", "TRANSFER", "POZYCZKA"]
+    assert schema["properties"]["category"]["enum"] == ["Spożywcze", "Rozrywka i hobby", None]
     assert json.loads(sent["messages"][-1]["content"]) == VIEW.as_dict()
 
 
@@ -92,3 +96,11 @@ def test_connection_error_means_no_proposal():
         raise httpx.ConnectError("connection refused", request=request)
 
     assert classify_or_none(classifier_with(handler), VIEW, CONTEXT) is None
+
+
+@pytest.mark.parametrize("body", [{"choices": []}, {"error": "brak"}, {"choices": [{"message": {}}]}])
+def test_malformed_response_means_no_proposal(body):
+    def handler(request):
+        return httpx.Response(200, json=body)
+
+    assert classifier_with(handler).classify(VIEW, CONTEXT) is None

@@ -6,7 +6,7 @@ from finbro.db import models
 from finbro.domain.enums import LlmJobStatus, ProposalSource, TxType
 from finbro.domain.money import Money
 from finbro.domain.transactions import Classification
-from finbro.llm.classifier import ClassifierUnavailable, OllamaClassifier
+from finbro.llm.classifier import ClassifierUnavailable, LlmClassifier
 from finbro.services.importing import ImportService
 from finbro.services.llm_jobs import MAX_ATTEMPTS, LlmJobService
 from finbro.services.uow import UnitOfWork
@@ -116,11 +116,11 @@ def test_interrupted_jobs_are_requeued_after_restart(uow, session_factory, db_se
     assert service.process_all() == 11
 
 
-def test_unreachable_ollama_is_treated_as_unavailable(uow, session_factory, db_session):
+def test_unreachable_model_server_is_treated_as_unavailable(uow, session_factory, db_session):
     ImportService(uow).import_pko_xml(fixture_bytes(WEEK41))
     uow.commit()
-    ollama = OllamaClassifier("http://127.0.0.1:1", "dowolny", timeout=2)
-    assert LlmJobService(session_factory, lambda _uow: ollama).process_one() is True
+    server = LlmClassifier("http://127.0.0.1:1/engines/v1", "dowolny", timeout=2)
+    assert LlmJobService(session_factory, lambda _uow: server).process_one() is True
     job = db_session.scalar(select(models.LlmJob).where(models.LlmJob.attempts == 1))
     assert job.status is LlmJobStatus.PENDING and "połączenia" in job.last_error
 

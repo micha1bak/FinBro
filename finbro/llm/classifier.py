@@ -1,4 +1,7 @@
-"""Klasyfikator transakcji lokalnym modelem językowym (Ollama, odpowiedź według schematu JSON)."""
+"""Klasyfikator transakcji lokalnym modelem językowym (API zgodne z OpenAI, odpowiedź według schematu JSON).
+
+Domyślnie Docker Model Runner (llama.cpp); działa też z Ollamą pod adresem ``.../v1``.
+"""
 
 from __future__ import annotations
 
@@ -115,7 +118,7 @@ def parse_answer(content: str, context: ClassifierContext) -> Classification | N
     )
 
 
-class OllamaClassifier:
+class LlmClassifier:
     def __init__(
         self,
         base_url: str,
@@ -133,15 +136,20 @@ class OllamaClassifier:
         payload = {
             "model": self.model,
             "stream": False,
-            "format": response_schema(context),
-            "options": {"temperature": 0},
+            "temperature": 0,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {"name": "klasyfikacja", "strict": True, "schema": response_schema(context)},
+            },
+            # Modele z trybem rozumowania (np. Gemma 4) odpowiadają bez niego wielokrotnie szybciej.
+            "chat_template_kwargs": {"enable_thinking": False},
             "messages": [
                 {"role": "system", "content": system_prompt(context)},
                 {"role": "user", "content": json.dumps(view.as_dict(), ensure_ascii=False)},
             ],
         }
         try:
-            response = self._client.post("/api/chat", json=payload)
+            response = self._client.post("/chat/completions", json=payload)
         except httpx.HTTPError as exc:
             raise ClassifierUnavailable(f"Brak połączenia z serwerem modelu: {exc}") from exc
         if response.status_code >= 500 or response.status_code == 404:
@@ -150,8 +158,8 @@ class OllamaClassifier:
             log.warning("Odpowiedź serwera modelu %s: %s", response.status_code, response.text[:200])
             return None
         try:
-            content = response.json()["message"]["content"]
-        except (ValueError, KeyError, TypeError):
+            content = response.json()["choices"][0]["message"]["content"]
+        except (ValueError, KeyError, IndexError, TypeError):
             return None
         return parse_answer(content, context)
 

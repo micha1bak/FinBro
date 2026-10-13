@@ -12,7 +12,7 @@ from finbro.config import Settings
 from finbro.domain.classification import ClassificationError, types_for
 from finbro.domain.enums import LlmJobStatus
 from finbro.domain.transactions import Transaction
-from finbro.llm.classifier import Classifier, ClassifierContext, ClassifierUnavailable, Example, OllamaClassifier
+from finbro.llm.classifier import Classifier, ClassifierContext, ClassifierUnavailable, Example, LlmClassifier
 from finbro.llm.view import build_view
 from finbro.services.receivables import ReceivablesService
 from finbro.services.uow import UnitOfWork
@@ -31,19 +31,19 @@ def retry_delay(attempts: int) -> timedelta:
 
 def model_name(settings: Settings, uow: UnitOfWork) -> str | None:
     """Model z ustawień aplikacji, a gdy pusty, z konfiguracji środowiska. Brak = LLM wyłączony."""
-    return (uow.reference.config().llm_model or settings.ollama_model or "").strip() or None
+    return (uow.reference.config().llm_model or settings.llm_model or "").strip() or None
 
 
-def ollama_factory(settings: Settings) -> Callable[[UnitOfWork], Classifier | None]:
-    cache: dict[tuple[str, str], OllamaClassifier] = {}
+def llm_factory(settings: Settings) -> Callable[[UnitOfWork], Classifier | None]:
+    cache: dict[tuple[str, str], LlmClassifier] = {}
 
     def factory(uow: UnitOfWork) -> Classifier | None:
         model = model_name(settings, uow)
         if model is None:
             return None
-        key = (settings.ollama_url, model)
+        key = (settings.llm_url, model)
         if key not in cache:
-            cache[key] = OllamaClassifier(settings.ollama_url, model)
+            cache[key] = LlmClassifier(settings.llm_url, model)
         return cache[key]
 
     return factory

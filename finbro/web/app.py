@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from finbro.config import Settings, load_dotenv
 from finbro.db.session import make_engine, make_session_factory, ping
-from finbro.services.llm_jobs import LlmJobService, ollama_factory
+from finbro.services.llm_jobs import LlmJobService, llm_factory
 from finbro.web.admin import setup_admin
 from finbro.web.routes import imports, inbox, receivables, reports, settlement, transactions, wallet
 from finbro.web.templating import WEB_DIR, templates
@@ -38,7 +38,7 @@ def create_app(
 
     engine = make_engine(settings.database_url)
     sessions = session_factory or make_session_factory(engine)
-    llm_jobs = LlmJobService(sessions, ollama_factory(settings))
+    llm_jobs = LlmJobService(sessions, llm_factory(settings))
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

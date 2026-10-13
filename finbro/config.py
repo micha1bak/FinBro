@@ -7,8 +7,9 @@ from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
 
-DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
-DEFAULT_OLLAMA_MODEL = ""
+# Docker Model Runner widziany z hosta (praca w .venv); kontener aplikacji dostaje adres z docker-compose.yml.
+DEFAULT_LLM_URL = "http://127.0.0.1:12434/engines/v1"
+DEFAULT_LLM_MODEL = ""
 
 
 class ConfigError(RuntimeError):
@@ -18,8 +19,8 @@ class ConfigError(RuntimeError):
 @dataclass(frozen=True)
 class Settings:
     database_url: str
-    ollama_url: str = DEFAULT_OLLAMA_URL
-    ollama_model: str = DEFAULT_OLLAMA_MODEL
+    llm_url: str = DEFAULT_LLM_URL
+    llm_model: str = DEFAULT_LLM_MODEL
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> Settings:
@@ -32,8 +33,8 @@ class Settings:
             )
         return cls(
             database_url=database_url,
-            ollama_url=env.get("OLLAMA_URL", "").strip() or DEFAULT_OLLAMA_URL,
-            ollama_model=env.get("OLLAMA_MODEL", "").strip() or DEFAULT_OLLAMA_MODEL,
+            llm_url=env.get("LLM_URL", "").strip() or DEFAULT_LLM_URL,
+            llm_model=env.get("LLM_MODEL", "").strip() or DEFAULT_LLM_MODEL,
         )
 
 
