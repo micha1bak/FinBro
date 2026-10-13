@@ -61,7 +61,7 @@
 - [x] 8.2 Zaimplementować budowanie widoku transakcji dla modelu z minimalizacją danych (D10): bez numerów rachunków, telefonów, kart i sald, z wycięciem takich ciągów z tytułu. Weryfikacja: test jednostkowy na opisie z numerem rachunku i telefonu sprawdza ich brak w wyniku.
 - [x] 8.3 Zaimplementować klasyfikator przez API zgodne z OpenAI (Docker Model Runner, D10) z odpowiedzią według schematu JSON (enumy typów, aktywnych kategorii i dłużników) i odrzucaniem wartości spoza schematu. Weryfikacja: testy z atrapą HTTP dla odpowiedzi poprawnej, spoza enumów i błędu serwera (wynik: brak propozycji).
 - [x] 8.4 Zaimplementować worker w tle przetwarzający `LlmJob` sekwencyjnie, z ponawianiem i odpornością na restart, oraz odświeżanie skrzynki przez HTMX, gdy kolejka nie jest pusta. Weryfikacja: test integracyjny z atrapą klasyfikatora, w którym import kończy się od razu, a propozycje pojawiają się po przetworzeniu kolejki. Test z wyłączoną Ollamą: pozycje w skrzynce bez propozycji, brak błędów aplikacji.
-- [ ] 8.5 Opisać w README uruchomienie profilu `llm`, pobranie modelu (`docker compose exec ollama ollama pull ...`), działanie bez LLM i alternatywę z natywną Ollamą (`OLLAMA_URL=http://host.docker.internal:11434`). Weryfikacja: kroki z README dają działającą klasyfikację na fixture'ach.
+- [x] 8.5 Opisać w README włączenie Docker Model Runner (na CPU), pobranie modelu (`docker model pull ai/gemma4:E2B`), działanie bez LLM i alternatywę z Ollamą (`LLM_URL=http://host.docker.internal:11434/v1`). Weryfikacja: kroki z README dają działającą klasyfikację na fixture'ach.
 
 ## 9. Rozliczenie tygodniowe
 

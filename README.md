@@ -68,6 +68,46 @@ W zakładce **Ustawienia** (<http://127.0.0.1:8000/admin>):
 
 Stan początkowy gotówki ustawisz w widoku **Portfel**.
 
+## Lokalny model językowy (opcjonalnie)
+
+Transakcji, których nie rozpoznają reguły ani historia, może klasyfikować lokalny model
+językowy. Działa w tle: import kończy się od razu, a propozycje pojawiają się w **Skrzynce**
+stopniowo (około 16 s na transakcję na CPU, szczegóły w [docs/llm-spike.md](docs/llm-spike.md)).
+Model działa przez **Docker Model Runner** (DMR) z Docker Desktop, bez dodatkowego kontenera,
+a dane nie opuszczają komputera.
+
+1. W Docker Desktop: **Settings → AI** włącz **Enable Docker Model Runner**. Na laptopie
+   ze zintegrowaną grafiką wyłącz akcelerację GPU (przy Vulkanie ładowanie modelu kończy się
+   błędem braku pamięci karty). Do pracy w `.venv` włącz też dostęp TCP z hosta (port 12434).
+2. Pobierz model domyślny (około 4 GB) i sprawdź, że DMR działa:
+
+   ```bash
+   docker model pull ai/gemma4:E2B
+   ```
+
+   ```bash
+   docker model status
+   ```
+
+3. Nic więcej nie trzeba ustawiać: aplikacja w kontenerze łączy się z
+   `http://model-runner.docker.internal/engines/v1` i używa modelu `ai/gemma4:E2B`.
+   Inny model ustawisz w `.env` (`LLM_MODEL=...`, potem `docker compose up -d`) albo
+   w panelu **Ustawienia** (pole modelu ma pierwszeństwo).
+
+**Bez modelu:** gdy DMR jest wyłączony albo model nie jest pobrany, aplikacja działa normalnie,
+a klasyfikacja kończy się na regułach i historii. Pozycje czekające na model są ponawiane
+pięć razy w ciągu około 8 minut, potem zostają w skrzynce bez propozycji.
+
+**Alternatywa: Ollama.** Klient korzysta z API zgodnego z OpenAI, więc działa też z Ollamą
+zainstalowaną w Windows. Ustaw w `.env`:
+
+```text
+LLM_URL=http://host.docker.internal:11434/v1
+LLM_MODEL=<model pobrany w Ollamie>
+```
+
+Adres `LLM_URL` dla kontenera trzeba wtedy też zmienić w `docker-compose.yml` (sekcja `app`).
+
 ## Praca deweloperska w `.venv`
 
 Aplikację i testy można uruchamiać lokalnie (np. w PyCharmie), korzystając z bazy
@@ -198,3 +238,5 @@ wolumen jest montowany w `/var/lib/postgresql`.
   kopie bazy (`*.dump`, `backups/`) i plik `.env`. Fixture'y testowe w `tests/fixtures/`
   są syntetyczne.
 - Porty bazy i aplikacji są publikowane wyłącznie na `127.0.0.1`.
+- Model językowy działa lokalnie (Docker Model Runner) i dostaje tylko typ operacji, kierunek,
+  kwotę, datę, nazwę kontrahenta i tytuł, z wyciętymi numerami rachunków, kart i telefonów.
