@@ -11,7 +11,7 @@
 
 ## 3. Dochody i podział
 
-- [ ] 3.1 Zaimplementować w `domain` koperty (D3), plan i podział z zaokrągleniem jak w arkuszu (D4). Weryfikacja: testy jednostkowe dla przykładów ze specyfikacji (2401,30 zł i 174,00 zł), wyboru planu obowiązującego w dniu dochodu oraz test własności, że suma podziału równa się kwocie.
+- [x] 3.1 Zaimplementować w `domain` koperty (D3), plan i podział z zaokrągleniem jak w arkuszu (D4). Weryfikacja: testy jednostkowe dla przykładów ze specyfikacji (2401,30 zł i 174,00 zł), wyboru planu obowiązującego w dniu dochodu oraz test własności, że suma podziału równa się kwocie.
 - [ ] 3.2 Zaimplementować serwis dochodów: dodawanie z walidacją, poprawianie i usuwanie tylko nierozliczonych, podział (zamrożony dla rozliczonych), lista i podsumowanie miesiąca, dodawanie planu z walidacją. Weryfikacja: testy integracyjne dla scenariuszy z `specs/income-allocation`, w tym zmiany planu, która nie zmienia rozliczonego dochodu.
 - [ ] 3.3 Zbudować widok Dochody (strona startowa): formularz dodawania, lista miesiąca z podziałem, statusem i sumami, przełącznik miesięcy, edycja i usuwanie, nowa nawigacja (Dochody, Rozliczenie, Majątek, Ustawienia). Weryfikacja: testy `TestClient` dla dodania poprawnego i błędnego dochodu, podsumowania października i odmowy edycji rozliczonego dochodu.
 
