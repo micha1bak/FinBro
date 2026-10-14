@@ -6,5 +6,4 @@ w rejestrze npm.
 
 | Plik | Paczka | Licencja |
 |------|--------|----------|
-| `htmx-2.0.11.min.js` | `htmx.org@2.0.11`, `dist/htmx.min.js` | 0BSD |
 | `chart-4.5.1.umd.min.js` | `chart.js@4.5.1`, `dist/chart.umd.min.js` | MIT |

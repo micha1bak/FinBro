@@ -1,12 +1,20 @@
 # FinBro
 
-Lokalna, jednoużytkownikowa aplikacja do podziału nieregularnych dochodów na koperty
-(Życie, XTB, Obligacje, Wakacje), cotygodniowych rozliczeń z listą przelewów, ewidencji
-należności i analizy przychodów oraz wydatków. Dane bankowe pochodzą z wyciągów XML
-eksportowanych z iPKO.
+Lokalna, jednoużytkownikowa aplikacja zastępująca arkusz finansów osobistych:
+
+- **Dochody**: wpisujesz datę, źródło i kwotę, a aplikacja dzieli każdy dochód na koperty
+  PKO (Życie) 50%, Wakacje 25%, XTB 12,5% i Obligacje 12,5%. Wakacje, XTB i Obligacje są
+  zaokrąglane do pełnych złotych, a resztę dostaje PKO.
+- **Rozliczenie**: jedna lista przelewów (kwota, rachunek, tytuł do skopiowania) dla
+  wszystkich nierozliczonych dochodów. Przycisk „Rozliczone” oznacza je wszystkie naraz,
+  a najnowsze rozliczenie da się cofnąć.
+- **Majątek**: salda PKO, XTB i Obligacji, ich suma i wykres w czasie. Salda XTB i Obligacji
+  rosną same o rozliczone przelewy, a wpisane saldo faktyczne pokazuje zysk albo stratę.
+  Saldo PKO wpisujesz ręcznie.
+- **Ustawienia**: rachunki docelowe kopert i zmiana planu podziału od wybranej daty.
 
 Aplikacja działa wyłącznie na Twoim komputerze. Baza i aplikacja są osiągalne tylko
-z `127.0.0.1`, a wyciągi bankowe nie są zapisywane na dysku ani w repozytorium.
+z `127.0.0.1`.
 
 ## Wymagania
 
@@ -31,8 +39,7 @@ z `127.0.0.1`, a wyciągi bankowe nie są zapisywane na dysku ani w repozytorium
    ```
 
    Najpierw startuje PostgreSQL. Gdy baza jest gotowa, aplikacja wykonuje migracje
-   (`alembic upgrade head`): tworzy schemat, kategorie, reguły startowe i plan podziału
-   50 / 12,5 / 12,5 / 25.
+   (`alembic upgrade head`): tworzy schemat i plan podziału 50 / 25 / 12,5 / 12,5.
 
 3. Otwórz <http://127.0.0.1:8000>. Stan usług sprawdzisz poleceniem `docker compose ps`
    (obie powinny być `healthy`), a połączenie z bazą adresem <http://127.0.0.1:8000/health>.
@@ -47,66 +54,44 @@ i `docker compose up -d` ich nie usuwają.
 
 ```bash
 git pull
+```
+
+```bash
 docker compose up -d --build
 ```
 
 Migracje wykonują się przy starcie, dane zostają w wolumenie.
 
-## Pierwsza konfiguracja
+### Przejście z pierwszej wersji (jednorazowo)
 
-W zakładce **Ustawienia** (<http://127.0.0.1:8000/admin>):
+Pierwsza wersja FinBro (import wyciągów, klasyfikacja wydatków) miała inny schemat bazy,
+którego nowe migracje nie przejmują. Jeśli wolumen `finbro-pgdata` pochodzi z tamtej wersji,
+aplikacja nie wystartuje (Alembic nie zna zapisanej rewizji). Wtedy usuń stary wolumen.
+**To kasuje wszystkie dane z pierwszej wersji.**
 
-1. **Ustawienia**: data startu rozliczeń (dochody sprzed tej daty nie są dzielone, ale
-   są widoczne w raportach) i numer konta głównego PKO (import sprawdza, czy wyciąg
-   pochodzi z tego rachunku).
-2. **Koperty**: numery rachunków docelowych dla XTB, Obligacji (rachunek rejestrowy)
-   i Wakacji (Revolut).
-3. **Plany podziału**: zmiana proporcji to nowy plan z datą obowiązywania. Starsze
-   dochody są dzielone według planu obowiązującego w ich dniu.
-4. **Reguły** i **Kategorie**: reguły startowe można edytować, a własne dodawać
-   (np. refundacje budżetu rodzinnego od konkretnego nadawcy).
-
-Stan początkowy gotówki ustawisz w widoku **Portfel**.
-
-## Lokalny model językowy (opcjonalnie)
-
-Transakcji, których nie rozpoznają reguły ani historia, może klasyfikować lokalny model
-językowy. Działa w tle: import kończy się od razu, a propozycje pojawiają się w **Skrzynce**
-stopniowo (około 16 s na transakcję na CPU, szczegóły w [docs/llm-spike.md](docs/llm-spike.md)).
-Model działa przez **Docker Model Runner** (DMR) z Docker Desktop, bez dodatkowego kontenera,
-a dane nie opuszczają komputera.
-
-1. W Docker Desktop: **Settings → AI** włącz **Enable Docker Model Runner**. Na laptopie
-   ze zintegrowaną grafiką wyłącz akcelerację GPU (przy Vulkanie ładowanie modelu kończy się
-   błędem braku pamięci karty). Do pracy w `.venv` włącz też dostęp TCP z hosta (port 12434).
-2. Pobierz model domyślny (około 4 GB) i sprawdź, że DMR działa:
-
-   ```bash
-   docker model pull ai/gemma4:E2B
-   ```
-
-   ```bash
-   docker model status
-   ```
-
-3. Nic więcej nie trzeba ustawiać: aplikacja w kontenerze łączy się z
-   `http://model-runner.docker.internal/engines/v1` i używa modelu `ai/gemma4:E2B`.
-   Inny model ustawisz w `.env` (`LLM_MODEL=...`, potem `docker compose up -d`) albo
-   w panelu **Ustawienia** (pole modelu ma pierwszeństwo).
-
-**Bez modelu:** gdy DMR jest wyłączony albo model nie jest pobrany, aplikacja działa normalnie,
-a klasyfikacja kończy się na regułach i historii. Pozycje czekające na model są ponawiane
-pięć razy w ciągu około 8 minut, potem zostają w skrzynce bez propozycji.
-
-**Alternatywa: Ollama.** Klient korzysta z API zgodnego z OpenAI, więc działa też z Ollamą
-zainstalowaną w Windows. Ustaw w `.env`:
-
-```text
-LLM_URL=http://host.docker.internal:11434/v1
-LLM_MODEL=<model pobrany w Ollamie>
+```bash
+docker compose down
 ```
 
-Adres `LLM_URL` dla kontenera trzeba wtedy też zmienić w `docker-compose.yml` (sekcja `app`).
+```bash
+docker volume rm finbro-pgdata
+```
+
+```bash
+docker compose up -d --build
+```
+
+## Pierwsza konfiguracja
+
+1. **Ustawienia**: wpisz rachunki docelowe Wakacji, XTB i Obligacji. Bez nich lista
+   przelewów pokazuje kwoty z ostrzeżeniem o brakującym rachunku.
+2. **Majątek**: wpisz salda początkowe PKO, XTB i Obligacji (stan po ostatnich wykonanych
+   przelewach). Rozliczenie z tego samego dnia co saldo nie jest do niego doliczane.
+3. **Dochody**: wpisuj kolejne dochody. Gdy wykonasz przelewy z widoku **Rozliczenie**,
+   kliknij „Rozliczone”.
+
+Zmiana proporcji to nowy plan z datą obowiązywania (w **Ustawieniach**). Zmienia podział
+nierozliczonych dochodów od tej daty. Rozliczone dochody zachowują swój podział.
 
 ## Praca deweloperska w `.venv`
 
@@ -142,7 +127,7 @@ bo obie używają portu 8000.
 .venv/Scripts/python -m pytest
 ```
 
-Testy domeny nie potrzebują bazy. Testy integracyjne korzystają z bazy `finbro_test`
+Testy domeny (podział, przelewy, salda) nie potrzebują bazy. Testy integracyjne korzystają z bazy `finbro_test`
 na serwerze z `docker compose` (tworzy ją skrypt `docker/db-init` przy pierwszym
 uruchomieniu wolumenu). Schemat powstaje migracjami na początku każdej sesji testów,
 a każdy test działa w transakcji wycofywanej na końcu. Gdy baza nie działa, testy
@@ -180,7 +165,7 @@ mkdir backups
 ```
 
 ```bash
-docker compose cp db:/tmp/finbro.dump backups/finbro-2026-10-12.dump
+docker compose cp db:/tmp/finbro.dump backups/finbro-2026-10-14.dump
 ```
 
 ```bash
@@ -194,7 +179,7 @@ docker compose stop app
 ```
 
 ```bash
-docker compose cp backups/finbro-2026-10-12.dump db:/tmp/finbro.dump
+docker compose cp backups/finbro-2026-10-14.dump db:/tmp/finbro.dump
 ```
 
 ```bash
@@ -233,10 +218,7 @@ wolumen jest montowany w `/var/lib/postgresql`.
 
 ## Prywatność
 
-- Wyciągi XML są przetwarzane z żądania HTTP i nie są zapisywane na dysku.
-- `.gitignore` i `.dockerignore` wykluczają wyciągi (`*.xml`, `*.csv`, `*.xls*`),
-  kopie bazy (`*.dump`, `backups/`) i plik `.env`. Fixture'y testowe w `tests/fixtures/`
-  są syntetyczne.
+- Dane (dochody, rachunki, salda) są tylko w bazie w wolumenie Dockera na Twoim komputerze.
+- `.gitignore` i `.dockerignore` wykluczają wyciągi i arkusze (`*.xml`, `*.csv`, `*.xls*`),
+  kopie bazy (`*.dump`, `backups/`) i plik `.env`. Testy używają wyłącznie zmyślonych kwot.
 - Porty bazy i aplikacji są publikowane wyłącznie na `127.0.0.1`.
-- Model językowy działa lokalnie (Docker Model Runner) i dostaje tylko typ operacji, kierunek,
-  kwotę, datę, nazwę kontrahenta i tytuł, z wyciętymi numerami rachunków, kart i telefonów.

@@ -73,7 +73,7 @@ Znikają wątek workera, zmienne `LLM_URL` i `LLM_MODEL` (z `config.py`, `docker
 - **Rozliczenie**: lista przelewów do wykonania z przyciskiem „Kopiuj” przy rachunku i tytule, przycisk „Rozliczone”, historia rozliczeń z możliwością cofnięcia najnowszego.
 - **Majątek**: salda trzech kont, suma, data ostatniej aktualizacji, formularz wpisu salda z pokazaną różnicą, wykres.
 - **Ustawienia**: plan podziału i rachunki docelowe.
-HTMX tylko tam, gdzie oszczędza przeładowania (dodanie dochodu, wpis salda). Wygląd: obecny `finbro.css`.
+Zwykłe formularze z przekierowaniem po zapisie wystarczają, więc HTMX został usunięty razem z plikiem w `static/vendor`. Wygląd: obecny `finbro.css`.
 
 ### D12. Testy
 - Jednostkowe: podział (przykłady ze specyfikacji na zmyślonych kwotach, test własności), sumy przelewów, salda i różnice majątku.
