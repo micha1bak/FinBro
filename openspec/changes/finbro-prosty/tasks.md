@@ -41,3 +41,9 @@
 
 - [x] 8.1 Dodać formę dochodu: wyliczenie w `domain`, kolumna `income.form` w nowej migracji (istniejące dochody dostają PKO), zapis i poprawianie formy w serwisie oraz sumy miesiąca według formy. Weryfikacja: testy integracyjne dla dochodu w gotówce z tym samym podziałem, formy domyślnej, zmiany formy przy poprawce i sum według formy (2401,30 zł PKO, 174,00 zł gotówka) oraz test migracji.
 - [x] 8.2 Pokazać formę w widoku Dochody: wybór PKO / gotówka w formularzu dodawania i edycji (domyślnie PKO), kolumna na liście i sumy miesiąca według formy. Weryfikacja: testy `TestClient` dla dodania dochodu w gotówce, domyślnej formy i sum według formy, a po przebudowie obrazu migracja działa na istniejącej bazie w Dockerze.
+
+## 9. Gotówka w majątku
+
+- [x] 9.1 Wydzielić konta majątku (PKO, Gotówka, XTB, Obligacje) jako osobne wyliczenie w `domain` z saldem tylko ręcznym dla PKO i Gotówki, zmienić CHECK `balance_entry.account` nową migracją i przenieść na nie serwis majątku. Weryfikacja: testy jednostkowe i integracyjne dla salda Gotówki niezmienionego przez dochód w gotówce, braku różnicy przy wpisie Gotówki i sumy 6182,25 zł.
+- [ ] 9.2 Dodać Gotówkę do widoku Majątek (kafelek, wybór konta w formularzu, wykres) i do README. Weryfikacja: testy `TestClient` dla wpisu salda Gotówki i sumy majątku, a po przebudowie obrazu migracja działa na istniejącej bazie w Dockerze.
+

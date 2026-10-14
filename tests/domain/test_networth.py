@@ -2,9 +2,10 @@ from datetime import date
 
 from finbro.domain.envelopes import Envelope
 from finbro.domain.money import Money
-from finbro.domain.networth import BalanceEntry, Contribution, balance, difference, snapshot, timeline
+from finbro.domain.networth import Account, BalanceEntry, Contribution, balance, difference, snapshot, timeline
 
-P, W, X, O = Envelope.PKO, Envelope.WAKACJE, Envelope.XTB, Envelope.OBLIGACJE
+P, G, X, O = Account.PKO, Account.GOTOWKA, Account.XTB, Account.OBLIGACJE
+W = Envelope.WAKACJE
 OCT12, OCT19, OCT20, NOV1 = date(2026, 10, 12), date(2026, 10, 19), date(2026, 10, 20), date(2026, 11, 1)
 
 
@@ -13,7 +14,7 @@ def zl(text):
 
 
 XTB_START = BalanceEntry(X, OCT12, zl("1200"))
-XTB_TRANSFER = Contribution(X, OCT19, zl("322"))
+XTB_TRANSFER = Contribution(Envelope.XTB, OCT19, zl("322"))
 
 
 def test_entry_sets_balance():
@@ -36,7 +37,7 @@ def test_transfer_on_entry_day_is_included_in_entry():
 
 
 def test_without_entries_balance_is_sum_of_transfers():
-    assert balance(O, [], [Contribution(O, OCT12, zl("300")), Contribution(O, OCT19, zl("22"))], OCT19) == zl("322")
+    assert balance(O, [], [Contribution(Envelope.OBLIGACJE, OCT12, zl("300")), Contribution(Envelope.OBLIGACJE, OCT19, zl("22"))], OCT19) == zl("322")
 
 
 def test_difference_shows_gain_or_loss():
@@ -49,16 +50,23 @@ def test_difference_shows_gain_or_loss():
 
 def test_pko_only_from_entries():
     pko = BalanceEntry(P, OCT12, zl("3000"))
-    assert balance(P, [pko], [Contribution(X, OCT19, zl("43"))], OCT19) == zl("3000")
+    assert balance(P, [pko], [Contribution(Envelope.XTB, OCT19, zl("43"))], OCT19) == zl("3000")
     assert balance(P, [], [], OCT19) is None
 
 
-def test_total_net_worth_excludes_holidays():
-    entries = [BalanceEntry(P, OCT12, zl("3000")), XTB_START, BalanceEntry(O, OCT12, zl("1088,25"))]
-    contributions = [XTB_TRANSFER, Contribution(O, OCT19, zl("322")), Contribution(W, OCT19, zl("644"))]
+def test_total_net_worth_with_cash_excludes_holidays():
+    entries = [BalanceEntry(P, OCT12, zl("3000")), BalanceEntry(G, OCT12, zl("250")), XTB_START, BalanceEntry(O, OCT12, zl("1088,25"))]
+    contributions = [XTB_TRANSFER, Contribution(Envelope.OBLIGACJE, OCT19, zl("322")), Contribution(W, OCT19, zl("644"))]
     snap = snapshot(entries, contributions, OCT19)
-    assert snap.balances == {P: zl("3000"), X: zl("1522"), O: zl("1410,25")}
-    assert snap.total == zl("5932,25")
+    assert snap.balances == {P: zl("3000"), G: zl("250"), X: zl("1522"), O: zl("1410,25")}
+    assert snap.total == zl("6182,25")
+
+
+def test_cash_only_from_entries_and_without_difference():
+    cash = BalanceEntry(G, OCT12, zl("250"))
+    assert balance(G, [cash], [XTB_TRANSFER, Contribution(W, OCT19, zl("44"))], OCT19) == zl("250")
+    later = BalanceEntry(G, OCT20, zl("180"))
+    assert difference(later, [cash, later], []) is None
 
 
 def test_timeline_points_on_entry_and_settlement_days():

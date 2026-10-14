@@ -10,9 +10,18 @@ from sqlalchemy.orm import Session
 
 from finbro.db.models import BalanceEntry as BalanceRow
 from finbro.db.models import Settlement, SettlementLine
-from finbro.domain.envelopes import NET_WORTH_ACCOUNTS, Envelope
+from finbro.domain.envelopes import Envelope
 from finbro.domain.money import Money
-from finbro.domain.networth import BalanceEntry, Contribution, Snapshot, difference, snapshot, timeline
+from finbro.domain.networth import (
+    FED_ENVELOPES,
+    Account,
+    BalanceEntry,
+    Contribution,
+    Snapshot,
+    difference,
+    snapshot,
+    timeline,
+)
 
 
 class NetWorthError(ValueError):
@@ -22,7 +31,7 @@ class NetWorthError(ValueError):
 @dataclass(frozen=True)
 class EntryView:
     entry: BalanceEntry
-    difference: Money | None  # tylko XTB i Obligacje
+    difference: Money | None  # tylko XTB i Obligacje (konta wyliczane)
 
 
 @dataclass(frozen=True)
@@ -43,7 +52,7 @@ class NetWorthService:
 
     def entries(self) -> list[BalanceEntry]:
         rows = self.session.scalars(select(BalanceRow).order_by(BalanceRow.date, BalanceRow.account))
-        return [BalanceEntry(Envelope(r.account), r.date, Money(r.amount)) for r in rows]
+        return [BalanceEntry(Account(r.account), r.date, Money(r.amount)) for r in rows]
 
     def contributions(self) -> list[Contribution]:
         rows = self.session.execute(
@@ -53,10 +62,8 @@ class NetWorthService:
         ).all()
         return [Contribution(Envelope(envelope), day, Money(amount)) for envelope, day, amount in rows]
 
-    def record(self, account: Envelope, day: date, amount: Money) -> EntryView:
+    def record(self, account: Account, day: date, amount: Money) -> EntryView:
         """Zapisuje saldo faktyczne; wpis z tego samego dnia zastępuje poprzedni."""
-        if account not in NET_WORTH_ACCOUNTS:
-            raise NetWorthError("Saldo można wpisać tylko dla PKO, XTB i Obligacji.")
         if amount.is_negative:
             raise NetWorthError("Saldo nie może być ujemne.")
         row = self.session.scalar(select(BalanceRow).where(BalanceRow.account == account.value, BalanceRow.date == day))
@@ -66,20 +73,16 @@ class NetWorthService:
             row.amount = amount.grosze
         self.session.commit()
         entry = BalanceEntry(account, day, amount)
-        return EntryView(entry, self._difference(entry, self.entries(), self.contributions()))
+        return EntryView(entry, difference(entry, self.entries(), self.contributions()))
 
     def overview(self, day: date) -> Overview:
         """Przegląd majątku; saldo bieżące na ``day`` albo na dzień najpóźniejszego wpisu, jeśli późniejszy."""
         entries, contributions = self.entries(), self.contributions()
-        relevant = [c for c in contributions if c.envelope in NET_WORTH_ACCOUNTS]
+        relevant = [c for c in contributions if c.envelope in FED_ENVELOPES]
         last_update = max([e.date for e in entries] + [c.date for c in relevant], default=None)
         return Overview(
             current=snapshot(entries, contributions, max(day, last_update) if last_update else day),
             last_update=last_update,
             timeline=timeline(entries, contributions),
-            entries=[EntryView(e, self._difference(e, entries, contributions)) for e in reversed(entries)],
+            entries=[EntryView(e, difference(e, entries, contributions)) for e in reversed(entries)],
         )
-
-    @staticmethod
-    def _difference(entry: BalanceEntry, entries: list[BalanceEntry], contributions: list[Contribution]) -> Money | None:
-        return None if entry.account is Envelope.PKO else difference(entry, entries, contributions)

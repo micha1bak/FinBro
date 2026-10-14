@@ -1,4 +1,4 @@
-"""Widok Majątek: salda PKO, XTB i Obligacji, suma, wpis salda faktycznego i wykres."""
+"""Widok Majątek: salda PKO, Gotówki, XTB i Obligacji, suma, wpis salda faktycznego i wykres."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from finbro.domain.envelopes import NET_WORTH_ACCOUNTS, Envelope
+from finbro.domain.networth import Account
 from finbro.services.networth import NetWorthError, NetWorthService
 from finbro.web.deps import DbSession
 from finbro.web.forms import FormError, parse_date, parse_money
@@ -30,7 +30,7 @@ def page(request: Request, session: DbSession, status_code: int = 200, **extra: 
     }
     context = {
         "overview": overview,
-        "accounts": NET_WORTH_ACCOUNTS,
+        "accounts": list(Account),
         "recorded": recorded,
         "chart_json": json.dumps(chart),
         "form": {"account": "XTB", "date": date.today().isoformat(), "amount": ""},
@@ -54,10 +54,9 @@ def record_balance(
     amount: str = Form(""),
 ) -> Response:
     try:
-        envelope = Envelope(account) if account in Envelope.__members__ else None
-        if envelope is None:
-            raise NetWorthError("Wybierz konto.")
-        view = NetWorthService(session).record(envelope, parse_date(date_), parse_money(amount))
+        if account not in Account.__members__:
+            raise NetWorthError("Saldo można wpisać tylko dla PKO, Gotówki, XTB i Obligacji.")
+        view = NetWorthService(session).record(Account(account), parse_date(date_), parse_money(amount))
     except (FormError, NetWorthError) as exc:
         session.rollback()
         return page(request, session, 400, error=str(exc), form={"account": account, "date": date_, "amount": amount})

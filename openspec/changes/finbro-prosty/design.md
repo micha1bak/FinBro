@@ -36,13 +36,13 @@ Rezygnujemy z repozytoriów i UnitOfWork: przy sześciu tabelach i jednym użytk
 - `income_share`: `income_id`, `envelope`, `amount` – podział zamrożony w chwili rozliczenia.
 - `settlement`: id, `date`, `created_at`; `settlement_line`: `settlement_id`, `envelope`, `amount`.
 - `envelope_account`: `envelope` (PK), `target_account` – rachunki docelowe Wakacji, XTB i Obligacji.
-- `balance_entry`: id, `account` (PKO / XTB / OBLIGACJE), `date`, `amount`, unikalne (`account`, `date`).
+- `balance_entry`: id, `account` (PKO / GOTOWKA / XTB / OBLIGACJE), `date`, `amount`, unikalne (`account`, `date`).
 
 Podział nierozliczonego dochodu liczymy w locie z planu obowiązującego w jego dniu. Przy rozliczeniu zapisujemy go w `income_share`, dzięki czemu późniejsza zmiana planu nie zmienia rozliczonych dochodów. Kwoty w groszach (`BIGINT`), udziały w punktach bazowych.
 *Alternatywa:* zapisywać podział przy każdym wpisie. Odrzucona: zmiana planu wymagałaby przeliczania zapisanych wierszy.
 
 ### D3. Stałe koperty w kodzie
-Koperty PKO, Wakacje, XTB i Obligacje to wyliczenie w `domain` (nazwa, kolejność, czy jest przelewem, czy wchodzi do majątku). Plan ma stałe kolumny zamiast tabeli udziałów.
+Koperty PKO, Wakacje, XTB i Obligacje to wyliczenie w `domain` (nazwa, kolejność, czy jest przelewem). Konta majątku to osobne wyliczenie: PKO, Gotówka, XTB i Obligacje, z informacją, czy saldo jest tylko ręczne (PKO, Gotówka) i z której koperty rosną rozliczeniami (XTB, Obligacje). Plan ma stałe kolumny zamiast tabeli udziałów.
 *Alternatywa:* koperty jako tabela edytowalna w ustawieniach. Odrzucona: arkusz od lat ma te same koperty, a stała lista upraszcza formularze, walidację i testy. Nowa koperta to mała zmiana kodu i migracja.
 
 ### D4. Zaokrąglenie jak w arkuszu

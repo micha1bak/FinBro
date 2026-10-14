@@ -1,7 +1,7 @@
 import json
 from datetime import date
 
-from finbro.domain.envelopes import Envelope
+from finbro.domain.networth import Account
 from finbro.domain.money import NBSP, Money
 from finbro.services.networth import NetWorthService
 from tests.services.test_networth import settle_two_incomes
@@ -17,7 +17,7 @@ def test_empty_view_encourages_initial_balances(client):
 
 
 def test_record_balance_and_difference(client, db_session):
-    NetWorthService(db_session).record(Envelope.XTB, date(2026, 10, 12), Money.parse("1200"))
+    NetWorthService(db_session).record(Account.XTB, date(2026, 10, 12), Money.parse("1200"))
     settle_two_incomes(db_session)
     response = client.post("/networth/balance", data={"account": "XTB", "date": "2026-11-01", "amount": "1560,00"},
                            follow_redirects=False)
@@ -31,9 +31,9 @@ def test_record_balance_and_difference(client, db_session):
 
 def test_totals_and_chart_data(client, db_session):
     networth = NetWorthService(db_session)
-    networth.record(Envelope.PKO, date(2026, 10, 12), Money.parse("3000"))
-    networth.record(Envelope.XTB, date(2026, 10, 12), Money.parse("1200"))
-    networth.record(Envelope.OBLIGACJE, date(2026, 10, 12), Money.parse("1088,25"))
+    networth.record(Account.PKO, date(2026, 10, 12), Money.parse("3000"))
+    networth.record(Account.XTB, date(2026, 10, 12), Money.parse("1200"))
+    networth.record(Account.OBLIGACJE, date(2026, 10, 12), Money.parse("1088,25"))
     settle_two_incomes(db_session)
     page = client.get("/networth").text
     assert value(page, "total") == f"5932,25{NBSP}zł"
@@ -46,6 +46,6 @@ def test_invalid_balance(client):
     response = client.post("/networth/balance", data={"account": "XTB", "date": "2026-11-01", "amount": "-5"})
     assert response.status_code == 400 and "ujemne" in response.text
     response = client.post("/networth/balance", data={"account": "WAKACJE", "date": "2026-11-01", "amount": "5"})
-    assert response.status_code == 400 and "PKO, XTB i Obligacji" in response.text
+    assert response.status_code == 400 and "PKO, Gotówki, XTB i Obligacji" in response.text
     response = client.post("/networth/balance", data={"account": "XTB", "date": "", "amount": "5"})
     assert response.status_code == 400 and "RRRR-MM-DD" in response.text

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from enum import StrEnum
 
 from sqlalchemy import (
     BigInteger,
@@ -18,8 +19,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from finbro.domain.envelopes import NET_WORTH_ACCOUNTS, TRANSFER_ENVELOPES, Envelope
+from finbro.domain.envelopes import TRANSFER_ENVELOPES, Envelope
 from finbro.domain.incomes import IncomeForm
+from finbro.domain.networth import Account
 
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
@@ -34,7 +36,7 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-def one_of(column: str, values: tuple[Envelope, ...]) -> str:
+def one_of(column: str, values: tuple[StrEnum, ...]) -> str:
     return f"{column} IN ({', '.join(repr(v.value) for v in values)})"
 
 
@@ -120,7 +122,7 @@ class BalanceEntry(Base):
     __tablename__ = "balance_entry"
     __table_args__ = (
         UniqueConstraint("account", "date"),
-        CheckConstraint(one_of("account", NET_WORTH_ACCOUNTS), name="account"),
+        CheckConstraint(one_of("account", tuple(Account)), name="account"),
         CheckConstraint("amount >= 0", name="amount_non_negative"),
     )
 

@@ -2,13 +2,14 @@ from datetime import date
 
 import pytest
 
-from finbro.domain.envelopes import Envelope
+from finbro.domain.incomes import IncomeForm
+from finbro.domain.networth import Account
 from finbro.domain.money import Money
 from finbro.services.incomes import IncomeService
 from finbro.services.networth import NetWorthError, NetWorthService
 from finbro.services.settlements import SettlementService
 
-P, W, X, O = Envelope.PKO, Envelope.WAKACJE, Envelope.XTB, Envelope.OBLIGACJE
+P, G, X, O = Account.PKO, Account.GOTOWKA, Account.XTB, Account.OBLIGACJE
 OCT12, OCT19 = date(2026, 10, 12), date(2026, 10, 19)
 
 
@@ -41,7 +42,7 @@ def test_settlement_increases_xtb_and_bonds_but_not_pko(db_session, networth):
     networth.record(O, OCT12, zl("1088,25"))
     settle_two_incomes(db_session)
     overview = networth.overview(OCT19)
-    assert overview.current.balances == {P: zl("3000"), X: zl("1522"), O: zl("1410,25")}
+    assert overview.current.balances == {P: zl("3000"), G: None, X: zl("1522"), O: zl("1410,25")}
     assert overview.current.total == zl("5932,25")
     assert overview.last_update == OCT19
     assert [s.total for s in overview.timeline] == [zl("5288,25"), zl("5932,25")]
@@ -66,10 +67,18 @@ def test_undo_settlement_lowers_computed_balance(db_session, networth):
     assert networth.overview(OCT19).current.balances[X] == zl("1200")
 
 
-@pytest.mark.parametrize("account, amount, message", [(W, zl("10"), "PKO, XTB i Obligacji"), (X, zl("-1"), "ujemne")])
-def test_invalid_entry(networth, account, amount, message):
-    with pytest.raises(NetWorthError, match=message):
-        networth.record(account, OCT12, amount)
+def test_negative_entry_is_rejected(networth):
+    with pytest.raises(NetWorthError, match="ujemne"):
+        networth.record(X, OCT12, zl("-1"))
+
+
+def test_cash_is_manual_only(db_session, networth):
+    networth.record(G, OCT12, zl("250"))
+    IncomeService(db_session).add(date(2026, 10, 14), "Korepetycje", zl("174"), IncomeForm.GOTOWKA)
+    settle_two_incomes(db_session)
+    overview = networth.overview(OCT19)
+    assert overview.current.balances[G] == zl("250")
+    assert networth.record(G, OCT19, zl("200")).difference is None
 
 
 def test_current_balance_includes_entries_dated_after_day(networth):

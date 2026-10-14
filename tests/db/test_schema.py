@@ -33,6 +33,7 @@ def test_one_balance_per_account_and_day(db_session):
     "row, constraint",
     [
         (BalanceEntry(account="WAKACJE", date=date(2026, 10, 12), amount=100), "ck_balance_entry_account"),
+        (BalanceEntry(account="KARTA", date=date(2026, 10, 12), amount=100), "ck_balance_entry_account"),
         (BalanceEntry(account="XTB", date=date(2026, 10, 12), amount=-1), "ck_balance_entry_amount_non_negative"),
         (EnvelopeAccount(envelope="PKO", target_account="00 0000"), "ck_envelope_account_envelope"),
         (Income(date=date(2026, 10, 14), source="Zlecenie", amount=0), "ck_income_amount_positive"),
@@ -52,3 +53,8 @@ def test_income_form_defaults_to_pko(db_session):
     db_session.flush()
     db_session.refresh(income)
     assert income.form == "PKO"
+
+
+def test_cash_balance_is_allowed(db_session):
+    db_session.add(BalanceEntry(account="GOTOWKA", date=date(2026, 10, 12), amount=25000))
+    db_session.flush()

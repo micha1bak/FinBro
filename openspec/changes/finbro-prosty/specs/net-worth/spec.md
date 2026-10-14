@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Bieżący obraz majątku na kontach PKO, XTB i Obligacje: salda wyliczane z rozliczonych przelewów, korygowane wpisanym saldem faktycznym, z sumą i wykresem w czasie.
+Bieżący obraz majątku na kontach PKO, Gotówka, XTB i Obligacje: salda wyliczane z rozliczonych przelewów, korygowane wpisanym saldem faktycznym, z sumą i wykresem w czasie.
 
 ## ADDED Requirements
 
 ### Requirement: Wpis salda faktycznego
-System SHALL pozwalać wpisać faktyczne saldo konta PKO, XTB albo Obligacje na wybrany dzień. Kwota MUST być nieujemna. Kolejny wpis dla tego samego konta i dnia zastępuje poprzedni.
+System SHALL pozwalać wpisać faktyczne saldo konta PKO, Gotówka, XTB albo Obligacje na wybrany dzień. Kwota MUST być nieujemna. Kolejny wpis dla tego samego konta i dnia zastępuje poprzedni.
 
 #### Scenario: Saldo początkowe
 - **WHEN** użytkownik wpisuje saldo XTB 1200,00 zł na 2026-10-12
@@ -31,19 +31,23 @@ System SHALL przy wpisie salda faktycznego XTB albo Obligacji pokazać różnic�
 - **WHEN** saldo wyliczone XTB na 2026-11-01 to 1522,00 zł, a użytkownik wpisuje 1560,00 zł
 - **THEN** system pokazuje różnicę +38,00 zł
 
-### Requirement: Saldo PKO tylko ręcznie
-System SHALL pokazywać saldo PKO wyłącznie jako ostatnie wpisane saldo faktyczne, bez doliczania części PKO z dochodów, bo saldo konta głównego zmieniają wydatki, których aplikacja nie zna.
+### Requirement: Saldo PKO i Gotówki tylko ręcznie
+System SHALL pokazywać saldo PKO i saldo Gotówki wyłącznie jako ostatnie wpisane saldo faktyczne, bez doliczania dochodów, bo oba salda zmieniają wydatki, których aplikacja nie zna.
 
 #### Scenario: Dochód nie zmienia salda PKO
 - **WHEN** ostatnie saldo PKO to 3000,00 zł, a później wpisano i rozliczono dochód z częścią PKO 86 zł
 - **THEN** saldo PKO nadal wynosi 3000,00 zł
 
+#### Scenario: Dochód w gotówce nie zmienia salda Gotówki
+- **WHEN** ostatnie saldo Gotówki to 250,00 zł, a później wpisano dochód 174,00 zł w gotówce
+- **THEN** saldo Gotówki nadal wynosi 250,00 zł
+
 ### Requirement: Suma i wykres majątku
-System SHALL pokazywać bieżące saldo każdego z kont PKO, XTB i Obligacje, ich sumę z datą ostatniej aktualizacji oraz wykres sumy w czasie z punktami w dniach wpisów sald i rozliczeń. Wakacje nie wchodzą do majątku.
+System SHALL pokazywać bieżące saldo każdego z kont PKO, Gotówka, XTB i Obligacje, ich sumę z datą ostatniej aktualizacji oraz wykres sumy w czasie z punktami w dniach wpisów sald i rozliczeń. Wakacje nie wchodzą do majątku.
 
 #### Scenario: Bieżąca suma
-- **WHEN** salda wynoszą PKO 3000,00 zł, XTB 1522,00 zł i Obligacje 1410,25 zł
-- **THEN** majątek wynosi 5932,25 zł
+- **WHEN** salda wynoszą PKO 3000,00 zł, Gotówka 250,00 zł, XTB 1522,00 zł i Obligacje 1410,25 zł
+- **THEN** majątek wynosi 6182,25 zł
 
 #### Scenario: Brak danych
 - **WHEN** nie wpisano żadnego salda i nie ma rozliczeń
