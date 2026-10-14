@@ -23,7 +23,7 @@
 
 ## 5. Majątek
 
-- [ ] 5.1 Zaimplementować w `domain` salda na dzień, różnicę przy wpisie salda faktycznego i oś czasu sumy majątku (D7). Weryfikacja: testy jednostkowe dla scenariuszy z `specs/net-worth` (1522,00 zł, brak podwójnego liczenia, +38,00 zł, PKO tylko ręcznie, suma 5932,25 zł).
+- [x] 5.1 Zaimplementować w `domain` salda na dzień, różnicę przy wpisie salda faktycznego i oś czasu sumy majątku (D7). Weryfikacja: testy jednostkowe dla scenariuszy z `specs/net-worth` (1522,00 zł, brak podwójnego liczenia, +38,00 zł, PKO tylko ręcznie, suma 5932,25 zł).
 - [ ] 5.2 Zaimplementować serwis majątku: wpis salda faktycznego (zastąpienie wpisu z tego samego dnia, kwota nieujemna) i odczyt sald, różnicy i osi czasu z bazy. Weryfikacja: testy integracyjne, w tym spadek wyliczonego salda XTB po cofnięciu rozliczenia.
 - [ ] 5.3 Zbudować widok Majątek: salda trzech kont, suma z datą aktualizacji, formularz wpisu salda z pokazaną różnicą, wykres sumy (Chart.js) i zachęta do wpisania sald przy braku danych. Weryfikacja: testy `TestClient` dla pustego widoku, wpisu salda z różnicą i danych wykresu.
 
