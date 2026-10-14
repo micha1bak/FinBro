@@ -35,4 +35,4 @@
 
 - [x] 7.1 Test end-to-end przez widoki: dwa dochody → lista przelewów → rozliczenie → saldo XTB w majątku rośnie o 322 zł → cofnięcie przywraca stan. Weryfikacja: test przechodzi razem z pełnym zestawem testów, także w kontenerze (`docker compose run --rm tests pytest`).
 - [x] 7.2 Przepisać README pod nową wersję: uruchomienie w Dockerze, pierwsza konfiguracja (rachunki, salda początkowe), praca w `.venv`, kopia zapasowa i przywracanie oraz jednorazowy reset bazy po przejściu z pierwszej wersji (D9). Weryfikacja: kroki z README wykonane na izolowanym projekcie compose dają działającą aplikację z czterema widokami.
-- [ ] 7.3 Po wyraźnej zgodzie użytkownika zresetować wolumen `finbro-pgdata` i uruchomić nową wersję. Weryfikacja: `docker compose ps` pokazuje bazę i aplikację jako `healthy`, a cztery widoki odpowiadają kodem 200.
+- [x] 7.3 Po wyraźnej zgodzie użytkownika zresetować wolumen `finbro-pgdata` i uruchomić nową wersję. Weryfikacja: `docker compose ps` pokazuje bazę i aplikację jako `healthy`, a cztery widoki odpowiadają kodem 200.
