@@ -3,6 +3,7 @@ from datetime import date
 import pytest
 
 from finbro.domain.envelopes import Envelope
+from finbro.domain.incomes import IncomeForm
 from finbro.domain.money import Money
 from finbro.domain.transfers import transfers
 from finbro.services.incomes import IncomeError, IncomeService
@@ -100,3 +101,23 @@ def test_unsettled_list(db_session, incomes):
     second = incomes.add(OCT14, "B", zl("20"))
     settle(db_session, incomes, first.id)
     assert [v.id for v in incomes.unsettled()] == [second.id]
+
+
+def test_cash_income_has_same_split_and_default_form_is_pko(incomes):
+    cash = incomes.add(OCT14, "Korepetycje", zl("174,00"), IncomeForm.GOTOWKA)
+    bank = incomes.add(OCT14, "Zlecenie", zl("174,00"))
+    assert (cash.form, bank.form) == (IncomeForm.GOTOWKA, IncomeForm.PKO)
+    assert cash.split == bank.split
+
+
+def test_form_can_be_changed_when_unsettled(incomes):
+    view = incomes.add(OCT14, "Zlecenie", zl("174,00"))
+    assert incomes.update(view.id, OCT14, "Zlecenie", zl("174,00"), IncomeForm.GOTOWKA).form is IncomeForm.GOTOWKA
+
+
+def test_month_sums_by_form(incomes):
+    incomes.add(date(2026, 10, 5), "Stypendium", zl("2401,30"))
+    incomes.add(OCT14, "Korepetycje", zl("174,00"), IncomeForm.GOTOWKA)
+    summary = incomes.month(2026, 10)
+    assert summary.by_form == {IncomeForm.PKO: zl("2401,30"), IncomeForm.GOTOWKA: zl("174,00")}
+    assert summary.total == zl("2575,30")

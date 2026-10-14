@@ -17,6 +17,17 @@ System SHALL pozwalać wpisać dochód z datą, źródłem (dowolny tekst) i kwo
 - **WHEN** użytkownik wpisuje kwotę „0”, ujemną albo niebędącą liczbą
 - **THEN** system odrzuca wpis z komunikatem, a lista dochodów się nie zmienia
 
+### Requirement: Forma dochodu
+System SHALL zapisywać przy każdym dochodzie formę: wpływ na PKO albo gotówka, domyślnie PKO. Forma jest widoczna na liście dochodów i można ją zmienić przy poprawianiu nierozliczonego dochodu. Forma nie zmienia podziału ani listy przelewów.
+
+#### Scenario: Dochód w gotówce
+- **WHEN** użytkownik wpisuje dochód 174,00 zł z formą „gotówka”
+- **THEN** lista pokazuje go z formą „gotówka” i z tym samym podziałem co dochód na PKO
+
+#### Scenario: Forma domyślna
+- **WHEN** użytkownik wpisuje dochód bez zmiany formy
+- **THEN** dochód ma formę PKO
+
 ### Requirement: Podział dochodu na koperty
 System SHALL dzielić każdy dochód według planu obowiązującego w dniu dochodu. Kwota każdej koperty poza PKO to iloczyn kwoty i udziału zaokrąglony do pełnych złotych (połówki w górę). PKO dostaje resztę, więc suma podziału zawsze równa się kwocie dochodu, co do grosza.
 
@@ -59,8 +70,12 @@ System SHALL pozwalać poprawić datę, źródło i kwotę nierozliczonego docho
 - **THEN** system odmawia z informacją, że najpierw trzeba cofnąć rozliczenie
 
 ### Requirement: Lista dochodów
-System SHALL pokazywać listę dochodów od najnowszych, z datą, źródłem, kwotą, podziałem na koperty i statusem (rozliczony albo nierozliczony), oraz sumę dochodów i sumę każdej koperty w wybranym miesiącu.
+System SHALL pokazywać listę dochodów od najnowszych, z datą, źródłem, kwotą, podziałem na koperty i statusem (rozliczony albo nierozliczony), oraz sumę dochodów, sumę każdej koperty i sumę każdej formy dochodu w wybranym miesiącu.
 
 #### Scenario: Podsumowanie miesiąca
 - **WHEN** w październiku 2026 są dochody 2401,30 zł i 174,00 zł
 - **THEN** widok października pokazuje sumę 2575,30 zł oraz sumy kopert Wakacje 644 zł, XTB 322 zł, Obligacje 322 zł i PKO 1287,30 zł
+
+#### Scenario: Sumy według formy
+- **WHEN** w październiku 2026 jest dochód 2401,30 zł na PKO i 174,00 zł w gotówce
+- **THEN** widok października pokazuje osobno sumę wpływów na PKO 2401,30 zł i sumę gotówki 174,00 zł

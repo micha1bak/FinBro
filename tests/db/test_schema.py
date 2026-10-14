@@ -37,9 +37,18 @@ def test_one_balance_per_account_and_day(db_session):
         (EnvelopeAccount(envelope="PKO", target_account="00 0000"), "ck_envelope_account_envelope"),
         (Income(date=date(2026, 10, 14), source="Zlecenie", amount=0), "ck_income_amount_positive"),
         (Income(date=date(2026, 10, 14), source="  ", amount=100), "ck_income_source_not_empty"),
+        (Income(date=date(2026, 10, 14), source="Zlecenie", amount=100, form="KARTA"), "ck_income_form"),
     ],
 )
 def test_check_constraints(db_session, row, constraint):
     db_session.add(row)
     with pytest.raises(IntegrityError, match=constraint):
         db_session.flush()
+
+
+def test_income_form_defaults_to_pko(db_session):
+    income = Income(date=date(2026, 10, 14), source="Zlecenie", amount=100)
+    db_session.add(income)
+    db_session.flush()
+    db_session.refresh(income)
+    assert income.form == "PKO"

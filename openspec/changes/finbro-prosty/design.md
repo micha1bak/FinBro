@@ -31,7 +31,7 @@ Rezygnujemy z repozytoriów i UnitOfWork: przy sześciu tabelach i jednym użytk
 *Alternatywa:* zostawić obecne warstwy. Odrzucona: dużo kodu przejściowego przy małej logice.
 
 ### D2. Model danych
-- `income`: id, `date`, `source`, `amount` (grosze), `settlement_id` (null = nierozliczony).
+- `income`: id, `date`, `source`, `amount` (grosze), `form` (`PKO` / `GOTOWKA`, CHECK, domyślnie `PKO`), `settlement_id` (null = nierozliczony).
 - `allocation_plan`: id, `effective_from` (unikalna), `pko`, `wakacje`, `xtb`, `obligacje` (punkty bazowe, CHECK: suma = 10000).
 - `income_share`: `income_id`, `envelope`, `amount` – podział zamrożony w chwili rozliczenia.
 - `settlement`: id, `date`, `created_at`; `settlement_line`: `settlement_id`, `envelope`, `amount`.

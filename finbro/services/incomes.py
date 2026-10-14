@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from finbro.db.models import AllocationPlan, Income, IncomeShare
 from finbro.domain.allocation import Plan, PlanError, Split, plan_for, split, total
 from finbro.domain.envelopes import Envelope
+from finbro.domain.incomes import IncomeForm
 from finbro.domain.money import Money
 
 MAX_SOURCE_LENGTH = 200
@@ -31,6 +32,7 @@ class IncomeView:
     amount: Money
     split: Split
     settlement_id: int | None
+    form: IncomeForm = IncomeForm.PKO
 
     @property
     def settled(self) -> bool:
@@ -44,6 +46,7 @@ class MonthSummary:
     incomes: list[IncomeView]
     total: Money
     totals: Split
+    by_form: dict[IncomeForm, Money]
 
 
 def plan_from_row(row: AllocationPlan) -> Plan:
@@ -85,17 +88,19 @@ class IncomeService:
 
     # --- dochody ---
 
-    def add(self, day: date, source: str, amount: Money) -> IncomeView:
+    def add(self, day: date, source: str, amount: Money, form: IncomeForm = IncomeForm.PKO) -> IncomeView:
         source, amount = self._validated(source, amount)
-        income = Income(date=day, source=source, amount=amount.grosze)
+        income = Income(date=day, source=source, amount=amount.grosze, form=form.value)
         self.session.add(income)
         self.session.commit()
         return self.get(income.id)
 
-    def update(self, income_id: int, day: date, source: str, amount: Money) -> IncomeView:
+    def update(
+        self, income_id: int, day: date, source: str, amount: Money, form: IncomeForm = IncomeForm.PKO
+    ) -> IncomeView:
         income = self._unsettled(income_id, "zmienić")
         source, amount = self._validated(source, amount)
-        income.date, income.source, income.amount = day, source, amount.grosze
+        income.date, income.source, income.amount, income.form = day, source, amount.grosze, form.value
         self.session.commit()
         return self.get(income_id)
 
@@ -122,6 +127,7 @@ class IncomeService:
             incomes=views,
             total=sum((v.amount for v in views), Money.zero()),
             totals=total(v.split for v in views),
+            by_form={f: sum((v.amount for v in views if v.form is f), Money.zero()) for f in IncomeForm},
         )
 
     def unsettled(self) -> list[IncomeView]:
@@ -166,5 +172,5 @@ class IncomeService:
                 if r.settlement_id is not None
                 else split(amount, plan_for(plans, r.date))
             )
-            views.append(IncomeView(r.id, r.date, r.source, amount, parts, r.settlement_id))
+            views.append(IncomeView(r.id, r.date, r.source, amount, parts, r.settlement_id, IncomeForm(r.form)))
         return views

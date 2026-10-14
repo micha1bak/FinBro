@@ -19,6 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from finbro.domain.envelopes import NET_WORTH_ACCOUNTS, TRANSFER_ENVELOPES, Envelope
+from finbro.domain.incomes import IncomeForm
 
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
@@ -79,12 +80,14 @@ class Income(Base):
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
         CheckConstraint("length(trim(source)) > 0", name="source_not_empty"),
+        CheckConstraint(f"form IN ({', '.join(repr(f.value) for f in IncomeForm)})", name="form"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     date: Mapped[date] = mapped_column(Date, index=True)
     source: Mapped[str] = mapped_column(String(200))
     amount: Mapped[int] = mapped_column(BigInteger)
+    form: Mapped[str] = mapped_column(String(10), server_default=IncomeForm.PKO.value)
     settlement_id: Mapped[int | None] = mapped_column(ForeignKey("settlement.id", ondelete="SET NULL"), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
