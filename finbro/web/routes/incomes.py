@@ -9,9 +9,10 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from finbro.domain.envelopes import Envelope
+from finbro.domain.incomes import IncomeForm
 from finbro.services.incomes import IncomeError, IncomeService
 from finbro.web.deps import DbSession
-from finbro.web.forms import FormError, month_label, parse_date, parse_money, parse_month, shift_month
+from finbro.web.forms import FormError, month_label, parse_date, parse_form, parse_money, parse_month, shift_month
 from finbro.web.templating import templates
 
 router = APIRouter()
@@ -21,11 +22,12 @@ def month_page(request: Request, session: DbSession, year: int, month: int, **ex
     return {
         "summary": IncomeService(session).month(year, month),
         "envelopes": list(Envelope),
+        "forms": list(IncomeForm),
         "month_label": month_label(year, month),
         "month_value": f"{year}-{month:02d}",
         "prev_month": shift_month(year, month, -1),
         "next_month": shift_month(year, month, 1),
-        "form": {"date": date.today().isoformat(), "source": "", "amount": ""},
+        "form": {"date": date.today().isoformat(), "source": "", "amount": "", "form": IncomeForm.PKO.value},
         "error": None,
         **extra,
     }
@@ -44,15 +46,16 @@ def add_income(
     date_: str = Form("", alias="date"),
     source: str = Form(""),
     amount: str = Form(""),
+    form: str = Form(IncomeForm.PKO.value),
 ) -> Response:
     try:
         day = parse_date(date_)
-        view = IncomeService(session).add(day, source, parse_money(amount))
+        view = IncomeService(session).add(day, source, parse_money(amount), parse_form(form))
     except (FormError, IncomeError) as exc:
         session.rollback()
         today = date.today()
         context = month_page(request, session, today.year, today.month,
-                             form={"date": date_, "source": source, "amount": amount}, error=str(exc))
+                             form={"date": date_, "source": source, "amount": amount, "form": form}, error=str(exc))
         return templates.TemplateResponse(request, "incomes.html", context, status_code=400)
     return RedirectResponse(f"/?month={view.date:%Y-%m}", status_code=303)
 
@@ -60,8 +63,10 @@ def add_income(
 @router.get("/incomes/{income_id}/edit", response_class=HTMLResponse)
 def edit_income_page(request: Request, income_id: int, session: DbSession) -> HTMLResponse:
     view = IncomeService(session).get(income_id)
-    form = {"date": view.date.isoformat(), "source": view.source, "amount": view.amount.format(currency=False)}
-    return templates.TemplateResponse(request, "income_edit.html", {"income": view, "form": form, "error": None})
+    form = {"date": view.date.isoformat(), "source": view.source, "amount": view.amount.format(currency=False),
+            "form": view.form.value}
+    context = {"income": view, "form": form, "forms": list(IncomeForm), "error": None}
+    return templates.TemplateResponse(request, "income_edit.html", context)
 
 
 @router.post("/incomes/{income_id}", response_model=None)
@@ -72,14 +77,15 @@ def update_income(
     date_: str = Form("", alias="date"),
     source: str = Form(""),
     amount: str = Form(""),
+    form: str = Form(IncomeForm.PKO.value),
 ) -> Response:
     service = IncomeService(session)
     try:
-        view = service.update(income_id, parse_date(date_), source, parse_money(amount))
+        view = service.update(income_id, parse_date(date_), source, parse_money(amount), parse_form(form))
     except (FormError, IncomeError) as exc:
         session.rollback()
-        context = {"income": service.get(income_id), "form": {"date": date_, "source": source, "amount": amount},
-                   "error": str(exc)}
+        context = {"income": service.get(income_id), "forms": list(IncomeForm),
+                   "form": {"date": date_, "source": source, "amount": amount, "form": form}, "error": str(exc)}
         return templates.TemplateResponse(request, "income_edit.html", context, status_code=400)
     return RedirectResponse(f"/?month={view.date:%Y-%m}", status_code=303)
 

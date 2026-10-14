@@ -66,3 +66,26 @@ def test_navigation_links(client):
     assert 'href="/?month=2025-12"' in page and 'href="/?month=2026-02"' in page
     for href in ["/settlement", "/networth", "/settings"]:
         assert f'href="{href}"' in page
+
+
+def test_cash_income_and_sums_by_form(client):
+    page = client.get("/").text
+    assert 'value="PKO" checked' in page and 'value="GOTOWKA">' in page  # domyślnie PKO
+    client.post("/incomes", data={"date": "2026-10-05", "source": "Stypendium", "amount": "2401,30"})
+    client.post("/incomes", data={"date": "2026-10-14", "source": "Korepetycje", "amount": "174", "form": "GOTOWKA"})
+    page = client.get("/?month=2026-10").text
+    cash_row = page.split("Korepetycje")[1].split("</tr>")[0]
+    assert 'data-form="GOTOWKA">gotówka<' in cash_row
+    assert 'data-form="PKO">PKO<' in page.split("Stypendium")[1].split("</tr>")[0]
+    by_form = page.split('id="by-form"')[1].split("</p>")[0]
+    assert f"PKO: <strong>2401,30{NBSP}zł</strong>" in by_form
+    assert f"gotówka: <strong>174,00{NBSP}zł</strong>" in by_form
+
+
+def test_change_form_when_editing(client, db_session):
+    view = IncomeService(db_session).add(date(2026, 10, 14), "Zlecenie", Money.parse("174"))
+    assert 'value="PKO" checked' in client.get(f"/incomes/{view.id}/edit").text
+    client.post(f"/incomes/{view.id}", data={"date": "2026-10-14", "source": "Zlecenie", "amount": "174", "form": "GOTOWKA"})
+    assert 'value="GOTOWKA" checked' in client.get(f"/incomes/{view.id}/edit").text
+    response = client.post(f"/incomes/{view.id}", data={"date": "2026-10-14", "source": "Zlecenie", "amount": "174", "form": "KARTA"})
+    assert response.status_code == 400 and "wybierz PKO albo gotówkę" in response.text

@@ -7,6 +7,9 @@
   <label>Data <input type="date" name="date" value="{{ form.date }}" required></label>
   <label>Źródło <input type="text" name="source" value="{{ form.source }}" maxlength="200" required></label>
   <label>Kwota <input type="text" name="amount" value="{{ form.amount }}" inputmode="decimal" required size="10"></label>
+  <span class="form-choice">Forma
+    {% for f in forms %}<label><input type="radio" name="form" value="{{ f.value }}"{% if form.form == f.value %} checked{% endif %}> {{ f.label }}</label>{% endfor %}
+  </span>
   <button type="submit">Zapisz</button>
   <a href="/?month={{ income.date.strftime('%Y-%m') }}">Anuluj</a>
 </form>

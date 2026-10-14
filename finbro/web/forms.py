@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from finbro.domain.incomes import IncomeForm
 from finbro.domain.money import Money, MoneyParseError
 
 MONTHS = ["styczeń", "luty", "marzec", "kwiecień", "maj", "czerwiec", "lipiec",
@@ -26,6 +27,13 @@ def parse_money(text: str | None, field: str = "Kwota") -> Money:
         return Money.parse(text or "")
     except MoneyParseError as exc:
         raise FormError(f"{field}: podaj kwotę, np. 174,00.") from exc
+
+
+def parse_form(text: str | None) -> IncomeForm:
+    try:
+        return IncomeForm(text or "")
+    except ValueError as exc:
+        raise FormError("Forma: wybierz PKO albo gotówkę.") from exc
 
 
 def parse_month(text: str | None, default: date) -> tuple[int, int]:

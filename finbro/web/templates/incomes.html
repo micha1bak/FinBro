@@ -8,6 +8,9 @@
   <label>Data <input type="date" name="date" value="{{ form.date }}" required></label>
   <label>Źródło <input type="text" name="source" value="{{ form.source }}" maxlength="200" required placeholder="np. Zlecenie"></label>
   <label>Kwota <input type="text" name="amount" value="{{ form.amount }}" inputmode="decimal" required placeholder="0,00" size="10"></label>
+  <span class="form-choice">Forma
+    {% for f in forms %}<label><input type="radio" name="form" value="{{ f.value }}"{% if form.form == f.value %} checked{% endif %}> {{ f.label }}</label>{% endfor %}
+  </span>
   <button type="submit">Dodaj</button>
 </form>
 
@@ -23,7 +26,7 @@
 <table id="incomes">
   <thead>
     <tr>
-      <th>Data</th><th>Źródło</th><th class="num">Kwota</th>
+      <th>Data</th><th>Źródło</th><th>Forma</th><th class="num">Kwota</th>
       {% for e in envelopes %}<th class="num">{{ e.label }}</th>{% endfor %}
       <th>Status</th><th></th>
     </tr>
@@ -33,6 +36,7 @@
     <tr id="income-{{ income.id }}">
       <td>{{ income.date.isoformat() }}</td>
       <td>{{ income.source }}</td>
+      <td class="form" data-form="{{ income.form.value }}">{{ income.form.label }}</td>
       <td class="num">{{ income.amount|money }}</td>
       {% for e in envelopes %}<td class="num" data-envelope="{{ e.value }}">{{ income.split[e]|money }}</td>{% endfor %}
       <td>{% if income.settled %}<span class="status settled">rozliczony</span>{% else %}<span class="status open">do rozliczenia</span>{% endif %}</td>
@@ -49,13 +53,16 @@
   </tbody>
   <tfoot>
     <tr id="month-total">
-      <th colspan="2">Razem</th>
+      <th colspan="3">Razem</th>
       <th class="num" id="total">{{ summary.total|money }}</th>
       {% for e in envelopes %}<th class="num" data-envelope="{{ e.value }}">{{ summary.totals[e]|money }}</th>{% endfor %}
       <th colspan="2"></th>
     </tr>
   </tfoot>
 </table>
+<p class="by-form" id="by-form">
+  {% for f in forms %}<span data-form="{{ f.value }}">{{ f.label }}: <strong>{{ summary.by_form[f]|money }}</strong></span>{% if not loop.last %} · {% endif %}{% endfor %}
+</p>
 {% else %}
 <p class="muted" id="empty">Brak dochodów w tym miesiącu.</p>
 {% endif %}

@@ -40,4 +40,4 @@
 ## 8. Forma dochodu (PKO albo gotówka)
 
 - [x] 8.1 Dodać formę dochodu: wyliczenie w `domain`, kolumna `income.form` w nowej migracji (istniejące dochody dostają PKO), zapis i poprawianie formy w serwisie oraz sumy miesiąca według formy. Weryfikacja: testy integracyjne dla dochodu w gotówce z tym samym podziałem, formy domyślnej, zmiany formy przy poprawce i sum według formy (2401,30 zł PKO, 174,00 zł gotówka) oraz test migracji.
-- [ ] 8.2 Pokazać formę w widoku Dochody: wybór PKO / gotówka w formularzu dodawania i edycji (domyślnie PKO), kolumna na liście i sumy miesiąca według formy. Weryfikacja: testy `TestClient` dla dodania dochodu w gotówce, domyślnej formy i sum według formy, a po przebudowie obrazu migracja działa na istniejącej bazie w Dockerze.
+- [x] 8.2 Pokazać formę w widoku Dochody: wybór PKO / gotówka w formularzu dodawania i edycji (domyślnie PKO), kolumna na liście i sumy miesiąca według formy. Weryfikacja: testy `TestClient` dla dodania dochodu w gotówce, domyślnej formy i sum według formy, a po przebudowie obrazu migracja działa na istniejącej bazie w Dockerze.

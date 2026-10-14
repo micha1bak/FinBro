@@ -79,3 +79,6 @@ tfoot th { color: var(--fg); }
 .copy-btn { padding: 0.1rem 0.45rem; font-size: 0.85rem; margin-left: 0.3rem; }
 .missing-account { display: inline-block; margin: 0; padding: 0.2rem 0.5rem; }
 .settle-form { margin: 1rem 0; }
+.form-choice { display: inline-block; margin-right: 0.75rem; }
+.form-choice label { margin: 0 0 0 0.4rem; }
+.by-form { margin: 0.5rem 0; color: var(--muted); }
