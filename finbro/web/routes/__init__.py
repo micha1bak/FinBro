@@ -1,1 +1,0 @@
-"""Routery widoków FinBro."""

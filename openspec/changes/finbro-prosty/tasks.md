@@ -3,7 +3,7 @@
 ## 1. Sprzątanie po pierwszej wersji
 
 - [x] 1.1 Usunąć zmianę `openspec/changes/finbro-mvp` (bez archiwizacji) i zaktualizować wskazówki w `openspec/config.yaml` (najważniejsze funkcje do testów: podział, rozliczenie, salda majątku). Weryfikacja: `openspec list` pokazuje tylko `finbro-prosty`, a `openspec validate finbro-prosty --strict` przechodzi.
-- [ ] 1.2 Usunąć moduły pierwszej wersji z testami (import XML i fixture'y PKO, klasyfikacja, LLM i worker, SQLAdmin, portfel, należności, raporty, tygodniowe rozliczenie, repozytoria i UnitOfWork, `scripts/`, `docs/llm-spike.md`), zmienne `LLM_*` z `config.py`, `docker-compose.yml` i `.env.example` oraz zależności `sqladmin` i `itsdangerous`. Zostaje szkielet aplikacji ze stroną startową i `/health`. Weryfikacja: pozostałe testy (`Money`, konfiguracja, `/health`, fixture'y bazy) przechodzą, a `docker compose build app` się udaje.
+- [x] 1.2 Usunąć moduły pierwszej wersji z testami (import XML i fixture'y PKO, klasyfikacja, LLM i worker, SQLAdmin, portfel, należności, raporty, tygodniowe rozliczenie, repozytoria i UnitOfWork, `scripts/`, `docs/llm-spike.md`), zmienne `LLM_*` z `config.py`, `docker-compose.yml` i `.env.example` oraz zależności `sqladmin` i `itsdangerous`. Zostaje szkielet aplikacji ze stroną startową i `/health`. Weryfikacja: pozostałe testy (`Money`, konfiguracja, `/health`, fixture'y bazy) przechodzą, a `docker compose build app` się udaje.
 
 ## 2. Model danych
 

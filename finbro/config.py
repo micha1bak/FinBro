@@ -7,12 +7,6 @@ from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
 
-# Docker Model Runner widziany z hosta (praca w .venv); kontener aplikacji dostaje adres z docker-compose.yml.
-DEFAULT_LLM_URL = "http://127.0.0.1:12434/engines/v1"
-# Model wybrany w spike'u (docs/llm-spike.md); można go zmienić w .env albo w panelu ustawień.
-DEFAULT_LLM_MODEL = "ai/gemma4:E2B"
-
-
 class ConfigError(RuntimeError):
     """Brak lub błędna wartość wymaganej zmiennej środowiskowej."""
 
@@ -20,8 +14,6 @@ class ConfigError(RuntimeError):
 @dataclass(frozen=True)
 class Settings:
     database_url: str
-    llm_url: str = DEFAULT_LLM_URL
-    llm_model: str = DEFAULT_LLM_MODEL
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> Settings:
@@ -32,11 +24,7 @@ class Settings:
                 "Brak zmiennej DATABASE_URL. Ustaw ją w pliku .env "
                 "(wzór w .env.example) albo w środowisku procesu."
             )
-        return cls(
-            database_url=database_url,
-            llm_url=env.get("LLM_URL", "").strip() or DEFAULT_LLM_URL,
-            llm_model=env.get("LLM_MODEL", "").strip() or DEFAULT_LLM_MODEL,
-        )
+        return cls(database_url=database_url)
 
 
 def load_dotenv(path: Path | str = ".env", environ: MutableMapping[str, str] | None = None) -> None:

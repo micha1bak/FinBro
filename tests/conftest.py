@@ -2,14 +2,13 @@
 
 Testy domeny nie potrzebują bazy. Testy integracyjne działają na prawdziwym
 PostgreSQL w bazie ``finbro_test``: schemat powstaje migracjami raz na sesję,
-a każdy test działa w transakcji wycofywanej na końcu (D11).
+a każdy test działa w transakcji wycofywanej na końcu.
 """
 
 from __future__ import annotations
 
 import os
 from collections.abc import Iterator
-from datetime import date
 from pathlib import Path
 
 import pytest
@@ -21,9 +20,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from finbro.config import Settings, load_dotenv
 from finbro.db import migrate
 from finbro.db.session import make_engine, ping
-from finbro.services.uow import UnitOfWork
 from finbro.web.app import create_app
-from tests.helpers import MAIN_ACCOUNT
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -95,9 +92,7 @@ def db_session(session_factory: sessionmaker[Session]) -> Iterator[Session]:
 @pytest.fixture
 def app(test_database_url: str, session_factory: sessionmaker[Session]) -> FastAPI:
     """Aplikacja korzystająca z sesji w transakcji testu."""
-    # Bez modelu językowego: testy, które go potrzebują, ustawiają model w ustawieniach aplikacji.
-    settings = Settings(database_url=test_database_url, llm_model="")
-    return create_app(settings, session_factory=session_factory, start_worker=False)
+    return create_app(Settings(database_url=test_database_url), session_factory=session_factory)
 
 
 @pytest.fixture
@@ -105,15 +100,3 @@ def client(app: FastAPI) -> Iterator[TestClient]:
     with TestClient(app) as test_client:
         yield test_client
 
-
-@pytest.fixture
-def uow(db_session: Session) -> UnitOfWork:
-    """Jednostka pracy ze skonfigurowanym kontem głównym i datą startu 2026-10-05.
-
-    Korzysta z tej samej sesji co ``db_session``, żeby savepointy w transakcji testu
-    nie przeplatały się między sesjami.
-    """
-    unit = UnitOfWork(db_session)
-    unit.reference.update_config(main_account_number=MAIN_ACCOUNT, start_date=date(2026, 10, 5))
-    unit.commit()
-    return unit
