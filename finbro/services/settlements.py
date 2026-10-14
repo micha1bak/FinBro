@@ -10,11 +10,12 @@ from datetime import date
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from finbro.db.models import EnvelopeAccount, Income, IncomeShare, Settlement, SettlementLine
+from finbro.db.models import Income, IncomeShare, Settlement, SettlementLine
 from finbro.domain.envelopes import Envelope
 from finbro.domain.money import Money
 from finbro.domain.transfers import Transfer, transfers
 from finbro.services.incomes import IncomeService, IncomeView
+from finbro.services.settings import SettingsService
 
 
 class SettlementError(ValueError):
@@ -58,12 +59,9 @@ class SettlementService:
     def __init__(self, session: Session) -> None:
         self.session = session
 
-    def accounts(self) -> dict[Envelope, str]:
-        return {Envelope(r.envelope): r.target_account for r in self.session.scalars(select(EnvelopeAccount))}
-
     def pending(self, day: date) -> Pending:
         incomes = IncomeService(self.session).unsettled()
-        accounts = self.accounts()
+        accounts = SettingsService(self.session).accounts()
         return Pending(
             incomes=incomes,
             transfers=[PendingTransfer(t, accounts.get(t.envelope)) for t in transfers((i.split for i in incomes), day)],

@@ -29,7 +29,7 @@
 
 ## 6. Ustawienia
 
-- [ ] 6.1 Zbudować widok Ustawienia: rachunki docelowe Wakacji, XTB i Obligacji oraz nowy plan podziału z datą obowiązywania i listą dotychczasowych planów. Weryfikacja: testy `TestClient` dla zapisu rachunku widocznego potem na liście przelewów i odrzucenia planu o sumie 95%.
+- [x] 6.1 Zbudować widok Ustawienia: rachunki docelowe Wakacji, XTB i Obligacji oraz nowy plan podziału z datą obowiązywania i listą dotychczasowych planów. Weryfikacja: testy `TestClient` dla zapisu rachunku widocznego potem na liście przelewów i odrzucenia planu o sumie 95%.
 
 ## 7. Integracja i uruchomienie
 

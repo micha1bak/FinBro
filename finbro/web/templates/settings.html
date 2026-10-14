@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Ustawienia – FinBro{% endblock %}
+{% block content %}
+<h1>Ustawienia</h1>
+
+{% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
+{% if saved == "accounts" %}<div class="notice ok" id="saved">Zapisano rachunki.</div>{% endif %}
+{% if saved == "plan" %}<div class="notice ok" id="saved">Zapisano nowy plan podziału.</div>{% endif %}
+
+<div class="forms-grid">
+  <form class="panel" method="post" action="/settings/accounts" id="accounts">
+    <h2>Rachunki docelowe</h2>
+    {% for e in transfer_envelopes %}
+    <label>{{ e.label }} <input type="text" name="{{ e.value }}" value="{{ accounts_form[e.value] }}" maxlength="64" placeholder="numer rachunku"></label>
+    {% endfor %}
+    <p class="muted">PKO to konto główne, na które wpływają dochody. Jego część nie jest przelewana.</p>
+    <button type="submit">Zapisz rachunki</button>
+  </form>
+
+  <form class="panel" method="post" action="/settings/plan" id="plan">
+    <h2>Nowy plan podziału</h2>
+    <label>Obowiązuje od <input type="date" name="effective_from" value="{{ plan_form.effective_from }}" required></label>
+    {% for e in envelopes %}
+    <label>{{ e.label }} (%) <input type="text" name="{{ e.value }}" value="{{ plan_form[e.value] }}" inputmode="decimal" required size="6"></label>
+    {% endfor %}
+    <p class="muted">Udziały muszą sumować się do 100%. Nowy plan zmienia podział nierozliczonych dochodów od tej daty.</p>
+    <button type="submit">Zapisz plan</button>
+  </form>
+</div>
+
+<h2>Plany podziału</h2>
+<table id="plans">
+  <thead><tr><th>Obowiązuje od</th>{% for e in envelopes %}<th class="num">{{ e.label }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for p in plans %}
+    <tr><td>{{ p.effective_from.isoformat() }}</td>{% for e in envelopes %}<td class="num">{{ format_percent(p.shares[e]) }}</td>{% endfor %}</tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
