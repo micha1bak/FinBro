@@ -7,7 +7,7 @@
 
 ## 2. Model danych
 
-- [ ] 2.1 Zastąpić stare migracje nową migracją początkową z tabelami z D2 (`income`, `allocation_plan`, `income_share`, `settlement`, `settlement_line`, `envelope_account`, `balance_entry`) i planem startowym 50/25/12,5/12,5 od 2000-01-01. Weryfikacja: testy na `finbro_test` sprawdzają utworzenie tabel i planu startowego, odrzucenie planu o sumie różnej od 100% (CHECK) oraz unikalność salda dla konta i dnia.
+- [x] 2.1 Zastąpić stare migracje nową migracją początkową z tabelami z D2 (`income`, `allocation_plan`, `income_share`, `settlement`, `settlement_line`, `envelope_account`, `balance_entry`) i planem startowym 50/25/12,5/12,5 od 2000-01-01. Weryfikacja: testy na `finbro_test` sprawdzają utworzenie tabel i planu startowego, odrzucenie planu o sumie różnej od 100% (CHECK) oraz unikalność salda dla konta i dnia.
 
 ## 3. Dochody i podział
 

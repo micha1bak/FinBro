@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy import func, select
 
-from finbro.db.models import Debtor
+from finbro.db.models import EnvelopeAccount
 from finbro.db.session import make_engine
 from tests.conftest import require_database
 
@@ -11,9 +11,9 @@ UNREACHABLE_URL = "postgresql+psycopg://finbro:x@127.0.0.1:1/finbro_test"
 
 
 def _write_same_row(db_session):
-    db_session.add(Debtor(name="Testowy Dłużnik Izolacji"))
+    db_session.add(EnvelopeAccount(envelope="XTB", target_account="00 1111 2222"))
     db_session.commit()  # zatwierdza tylko savepoint wewnątrz transakcji testu
-    count = db_session.scalar(select(func.count()).select_from(Debtor).where(Debtor.name == "Testowy Dłużnik Izolacji"))
+    count = db_session.scalar(select(func.count()).select_from(EnvelopeAccount).where(EnvelopeAccount.envelope == "XTB"))
     assert count == 1
 
 
