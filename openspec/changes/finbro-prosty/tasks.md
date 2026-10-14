@@ -45,5 +45,5 @@
 ## 9. Gotówka w majątku
 
 - [x] 9.1 Wydzielić konta majątku (PKO, Gotówka, XTB, Obligacje) jako osobne wyliczenie w `domain` z saldem tylko ręcznym dla PKO i Gotówki, zmienić CHECK `balance_entry.account` nową migracją i przenieść na nie serwis majątku. Weryfikacja: testy jednostkowe i integracyjne dla salda Gotówki niezmienionego przez dochód w gotówce, braku różnicy przy wpisie Gotówki i sumy 6182,25 zł.
-- [ ] 9.2 Dodać Gotówkę do widoku Majątek (kafelek, wybór konta w formularzu, wykres) i do README. Weryfikacja: testy `TestClient` dla wpisu salda Gotówki i sumy majątku, a po przebudowie obrazu migracja działa na istniejącej bazie w Dockerze.
+- [x] 9.2 Dodać Gotówkę do widoku Majątek (kafelek, wybór konta w formularzu, wykres) i do README. Weryfikacja: testy `TestClient` dla wpisu salda Gotówki i sumy majątku, a po przebudowie obrazu migracja działa na istniejącej bazie w Dockerze.
 

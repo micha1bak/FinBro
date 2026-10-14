@@ -49,3 +49,19 @@ def test_invalid_balance(client):
     assert response.status_code == 400 and "PKO, Gotówki, XTB i Obligacji" in response.text
     response = client.post("/networth/balance", data={"account": "XTB", "date": "", "amount": "5"})
     assert response.status_code == 400 and "RRRR-MM-DD" in response.text
+
+
+def test_cash_balance_in_net_worth(client, db_session):
+    assert "Gotówki" in client.get("/networth").text  # zachęta do sald początkowych
+    networth = NetWorthService(db_session)
+    networth.record(Account.PKO, date(2026, 10, 12), Money.parse("3000"))
+    networth.record(Account.XTB, date(2026, 10, 12), Money.parse("1200"))
+    networth.record(Account.OBLIGACJE, date(2026, 10, 12), Money.parse("1088,25"))
+    settle_two_incomes(db_session)
+    response = client.post("/networth/balance", data={"account": "GOTOWKA", "date": "2026-10-19", "amount": "250,00"},
+                           follow_redirects=False)
+    page = client.get(response.headers["location"]).text
+    assert value(page, "balance-GOTOWKA") == f"250,00{NBSP}zł"
+    assert value(page, "total") == f"6182,25{NBSP}zł"
+    assert 'id="difference"' not in page  # saldo tylko ręczne, bez różnicy
+    assert '<option value="GOTOWKA">Gotówka</option>' in page

@@ -2,15 +2,15 @@
 
 Lokalna, jednoużytkownikowa aplikacja zastępująca arkusz finansów osobistych:
 
-- **Dochody**: wpisujesz datę, źródło i kwotę, a aplikacja dzieli każdy dochód na koperty
-  PKO (Życie) 50%, Wakacje 25%, XTB 12,5% i Obligacje 12,5%. Wakacje, XTB i Obligacje są
-  zaokrąglane do pełnych złotych, a resztę dostaje PKO.
+- **Dochody**: wpisujesz datę, źródło, kwotę i formę (wpływ na PKO albo gotówka), a aplikacja
+  dzieli każdy dochód na koperty PKO (Życie) 50%, Wakacje 25%, XTB 12,5% i Obligacje 12,5%.
+  Wakacje, XTB i Obligacje są zaokrąglane do pełnych złotych, a resztę dostaje PKO.
 - **Rozliczenie**: jedna lista przelewów (kwota, rachunek, tytuł do skopiowania) dla
   wszystkich nierozliczonych dochodów. Przycisk „Rozliczone” oznacza je wszystkie naraz,
   a najnowsze rozliczenie da się cofnąć.
-- **Majątek**: salda PKO, XTB i Obligacji, ich suma i wykres w czasie. Salda XTB i Obligacji
-  rosną same o rozliczone przelewy, a wpisane saldo faktyczne pokazuje zysk albo stratę.
-  Saldo PKO wpisujesz ręcznie.
+- **Majątek**: salda PKO, Gotówki, XTB i Obligacji, ich suma i wykres w czasie. Salda XTB
+  i Obligacji rosną same o rozliczone przelewy, a wpisane saldo faktyczne pokazuje zysk albo
+  stratę. Salda PKO i Gotówki wpisujesz ręcznie.
 - **Ustawienia**: rachunki docelowe kopert i zmiana planu podziału od wybranej daty.
 
 Aplikacja działa wyłącznie na Twoim komputerze. Baza i aplikacja są osiągalne tylko
@@ -85,8 +85,8 @@ docker compose up -d --build
 
 1. **Ustawienia**: wpisz rachunki docelowe Wakacji, XTB i Obligacji. Bez nich lista
    przelewów pokazuje kwoty z ostrzeżeniem o brakującym rachunku.
-2. **Majątek**: wpisz salda początkowe PKO, XTB i Obligacji (stan po ostatnich wykonanych
-   przelewach). Rozliczenie z tego samego dnia co saldo nie jest do niego doliczane.
+2. **Majątek**: wpisz salda początkowe PKO, Gotówki, XTB i Obligacji (stan po ostatnich
+   wykonanych przelewach). Rozliczenie z tego samego dnia co saldo nie jest do niego doliczane.
 3. **Dochody**: wpisuj kolejne dochody. Gdy wykonasz przelewy z widoku **Rozliczenie**,
    kliknij „Rozliczone”.
 
