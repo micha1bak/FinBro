@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Dochody – FinBro{% endblock %}
+{% block content %}
+<h1>Dochody</h1>
+
+<form class="panel add-income" method="post" action="/incomes">
+  <h2>Nowy dochód</h2>
+  <label>Data <input type="date" name="date" value="{{ form.date }}" required></label>
+  <label>Źródło <input type="text" name="source" value="{{ form.source }}" maxlength="200" required placeholder="np. Zlecenie"></label>
+  <label>Kwota <input type="text" name="amount" value="{{ form.amount }}" inputmode="decimal" required placeholder="0,00" size="10"></label>
+  <button type="submit">Dodaj</button>
+</form>
+
+{% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
+
+<nav class="month-nav">
+  <a href="/?month={{ prev_month }}">←</a>
+  <strong id="month">{{ month_label }}</strong>
+  <a href="/?month={{ next_month }}">→</a>
+</nav>
+
+{% if summary.incomes %}
+<table id="incomes">
+  <thead>
+    <tr>
+      <th>Data</th><th>Źródło</th><th class="num">Kwota</th>
+      {% for e in envelopes %}<th class="num">{{ e.label }}</th>{% endfor %}
+      <th>Status</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for income in summary.incomes %}
+    <tr id="income-{{ income.id }}">
+      <td>{{ income.date.isoformat() }}</td>
+      <td>{{ income.source }}</td>
+      <td class="num">{{ income.amount|money }}</td>
+      {% for e in envelopes %}<td class="num" data-envelope="{{ e.value }}">{{ income.split[e]|money }}</td>{% endfor %}
+      <td>{% if income.settled %}<span class="status settled">rozliczony</span>{% else %}<span class="status open">do rozliczenia</span>{% endif %}</td>
+      <td class="actions">
+        {% if not income.settled %}
+        <a href="/incomes/{{ income.id }}/edit">Edytuj</a>
+        <form class="inline" method="post" action="/incomes/{{ income.id }}/delete" onsubmit="return confirm('Usunąć ten dochód?')">
+          <button type="submit" class="link">Usuń</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr id="month-total">
+      <th colspan="2">Razem</th>
+      <th class="num" id="total">{{ summary.total|money }}</th>
+      {% for e in envelopes %}<th class="num" data-envelope="{{ e.value }}">{{ summary.totals[e]|money }}</th>{% endfor %}
+      <th colspan="2"></th>
+    </tr>
+  </tfoot>
+</table>
+{% else %}
+<p class="muted" id="empty">Brak dochodów w tym miesiącu.</p>
+{% endif %}
+{% endblock %}

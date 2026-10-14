@@ -8,13 +8,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from finbro.config import Settings, load_dotenv
 from finbro.db.session import make_engine, make_session_factory, ping
-from finbro.web.templating import WEB_DIR, templates
+from finbro.web.routes import incomes
+from finbro.web.templating import WEB_DIR
 
 
 def create_app(settings: Settings | None = None, session_factory: Callable[..., Any] | None = None) -> FastAPI:
@@ -30,9 +31,7 @@ def create_app(settings: Settings | None = None, session_factory: Callable[..., 
     app.state.session_factory = session_factory or make_session_factory(engine)
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
-    @app.get("/", response_class=HTMLResponse)
-    def index(request: Request) -> HTMLResponse:
-        return templates.TemplateResponse(request, "index.html")
+    app.include_router(incomes.router)
 
     @app.get("/health")
     def health() -> JSONResponse:
