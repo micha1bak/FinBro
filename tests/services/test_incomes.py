@@ -2,10 +2,11 @@ from datetime import date
 
 import pytest
 
-from finbro.db.models import Income, IncomeShare, Settlement
 from finbro.domain.envelopes import Envelope
 from finbro.domain.money import Money
+from finbro.domain.transfers import transfers
 from finbro.services.incomes import IncomeError, IncomeService
+from finbro.services.settlements import SettlementService
 
 P, W, X, O = Envelope.PKO, Envelope.WAKACJE, Envelope.XTB, Envelope.OBLIGACJE
 OCT14 = date(2026, 10, 14)
@@ -21,15 +22,10 @@ def incomes(db_session):
 
 
 def settle(db_session, incomes, income_id):
-    """Rozliczenie zapisane wprost w bazie (serwis rozliczeń to zadanie 4.2)."""
+    """Rozlicza pojedynczy dochód serwisem rozliczeń."""
     view = incomes.get(income_id)
-    settlement = Settlement(date=OCT14)
-    db_session.add(settlement)
-    db_session.flush()
-    for envelope, amount in view.split.items():
-        db_session.add(IncomeShare(income_id=income_id, envelope=envelope.value, settlement_id=settlement.id, amount=amount.grosze))
-    db_session.get(Income, income_id).settlement_id = settlement.id
-    db_session.commit()
+    expected = {t.envelope: t.amount for t in transfers([view.split], OCT14)}
+    SettlementService(db_session).settle([income_id], expected, OCT14)
 
 
 def test_add_income_is_unsettled_with_split(incomes):

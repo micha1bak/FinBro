@@ -18,7 +18,7 @@
 ## 4. Rozliczenie
 
 - [x] 4.1 Zaimplementować w `domain` sumy przelewów z nierozliczonych dochodów i tytuł `FinBro <Koperta> <data>`. Weryfikacja: testy jednostkowe dla dwóch dochodów (644 / 322 / 322 zł), pominięcia koperty z sumą 0 zł i formatu tytułu.
-- [ ] 4.2 Zaimplementować serwis rozliczeń (D5, D6): rozliczenie wskazanych dochodów z blokadą wierszy, zapis linii i zamrożonego podziału, odrzucenie przy zmienionej liście, historia i cofnięcie tylko najnowszego. Weryfikacja: testy integracyjne dla scenariuszy z `specs/transfer-settlement`, w tym dochodu dodanego w międzyczasie i próby cofnięcia starszego rozliczenia.
+- [x] 4.2 Zaimplementować serwis rozliczeń (D5, D6): rozliczenie wskazanych dochodów z blokadą wierszy, zapis linii i zamrożonego podziału, odrzucenie przy zmienionej liście, historia i cofnięcie tylko najnowszego. Weryfikacja: testy integracyjne dla scenariuszy z `specs/transfer-settlement`, w tym dochodu dodanego w międzyczasie i próby cofnięcia starszego rozliczenia.
 - [ ] 4.3 Zbudować widok Rozliczenie: lista przelewów z rachunkiem, tytułem i przyciskami kopiowania, ostrzeżenie o braku rachunku, przycisk „Rozliczone”, historia z cofnięciem najnowszego. Weryfikacja: testy `TestClient` dla listy, braku przelewów, rozliczenia i cofnięcia.
 
 ## 5. Majątek

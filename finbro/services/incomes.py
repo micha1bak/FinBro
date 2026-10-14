@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import calendar
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 
@@ -107,7 +107,7 @@ class IncomeService:
         income = self.session.get(Income, income_id)
         if income is None:
             raise IncomeError("Nie ma takiego dochodu.")
-        return self._views([income])[0]
+        return self.views([income])[0]
 
     def month(self, year: int, month: int) -> MonthSummary:
         first = date(year, month, 1)
@@ -115,7 +115,7 @@ class IncomeService:
         rows = self.session.scalars(
             select(Income).where(Income.date.between(first, last)).order_by(Income.date.desc(), Income.id.desc())
         ).all()
-        views = self._views(rows)
+        views = self.views(rows)
         return MonthSummary(
             year=year,
             month=month,
@@ -128,7 +128,7 @@ class IncomeService:
         rows = self.session.scalars(
             select(Income).where(Income.settlement_id.is_(None)).order_by(Income.date, Income.id)
         ).all()
-        return self._views(rows)
+        return self.views(rows)
 
     # --- pomocnicze ---
 
@@ -150,7 +150,8 @@ class IncomeService:
             raise IncomeError(f"Dochód jest rozliczony. Aby go {action}, najpierw cofnij rozliczenie.")
         return income
 
-    def _views(self, rows: list[Income]) -> list[IncomeView]:
+    def views(self, rows: Sequence[Income]) -> list[IncomeView]:
+        """Widoki dochodów: podział z planu dla nierozliczonych, zamrożony dla rozliczonych."""
         plans = self.plans()
         frozen: dict[int, Split] = defaultdict(dict)
         settled_ids = [r.id for r in rows if r.settlement_id is not None]
