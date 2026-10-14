@@ -9,7 +9,7 @@ context: |
 # Per-artifact rules.
 rules:
   tasks:
-    - Każde zadanie implementujące logikę (domena, parser importu, klasyfikacja, rozliczenia, salda, raporty) musi obejmować napisanie testów automatycznych i wskazywać je w opisie weryfikacji.
+    - Każde zadanie implementujące logikę (domena, podział dochodów, rozliczenia, salda majątku) musi obejmować napisanie testów automatycznych i wskazywać je w opisie weryfikacji.
     - Testów nie wolno odkładać do osobnej, końcowej grupy zadań.
 
 # Per-operation guidance.
@@ -17,9 +17,9 @@ operations:
   apply:
     guidance:
       - Zawsze pisz testy automatyczne (pytest) dla najważniejszych funkcji, razem z kodem, którego dotyczą, w tym samym zadaniu.
-      - Za najważniejsze funkcje uznaj co najmniej logikę domenową (kwoty, podział, rozliczenia i przeniesienia, salda należności, stan portfela), parser i deduplikację importu, silnik reguł i potok klasyfikacji oraz agregacje raportów.
+      - Za najważniejsze funkcje uznaj co najmniej logikę domenową (kwoty, podział dochodów z zaokrągleniem, sumy przelewów i rozliczenia, salda i różnice majątku) oraz serwisy zapisujące te dane.
       - Nie oznaczaj zadania jako wykonanego, dopóki jego testy nie przechodzą; uruchom pełny zestaw testów przed zakończeniem każdej grupy zadań.
-      - Testy używają wyłącznie syntetycznych danych; nigdy nie kopiuj danych z prawdziwych wyciągów użytkownika do repozytorium.
+      - Testy używają wyłącznie syntetycznych danych; nigdy nie kopiuj do repozytorium danych z prawdziwych wyciągów ani z arkusza finansowego użytkownika.
       - Po ukończeniu każdego zadania z tasks.md (testy przechodzą, checkbox odhaczony) zrób osobny, mały commit zawierający tylko zmiany tego zadania wraz z aktualizacją tasks.md. Nie łącz kilku zadań w jeden commit i nie zostawiaj ukończonego zadania niezacommitowanego.
       - Wiadomość commita po polsku w formacie `<numer zadania> <krótki opis>`, np. `2.1 Typ Money na groszach z parsowaniem kwot`.
       - Przed każdym commitem sprawdź `git status` i dodawaj pliki jawnie (bez `git add -A`), żeby do repozytorium nie trafiły wyciągi bankowe, kopie bazy, pliki `.env` ani inne dane wykluczone w `.gitignore`.
