@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from finbro.config import Settings, load_dotenv
 from finbro.db.session import make_engine, make_session_factory, ping
-from finbro.web.routes import incomes
+from finbro.web.routes import incomes, settlement
 from finbro.web.templating import WEB_DIR
 
 
@@ -32,6 +32,7 @@ def create_app(settings: Settings | None = None, session_factory: Callable[..., 
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
     app.include_router(incomes.router)
+    app.include_router(settlement.router)
 
     @app.get("/health")
     def health() -> JSONResponse:

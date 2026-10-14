@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Rozliczenie – FinBro{% endblock %}
+{% block content %}
+<h1>Rozliczenie</h1>
+
+{% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
+{% if done %}<div class="notice ok" id="done">Rozliczone. Dochody oznaczone jako rozliczone.</div>{% endif %}
+
+{% if pending.transfers %}
+<p>Przelewy dla <strong>{{ pending.incomes|length }}</strong> nierozliczonych dochodów
+  na łączną kwotę {{ pending.incomes|sum(attribute='amount.grosze')|money }}. Część PKO zostaje na koncie głównym.</p>
+<table id="transfers">
+  <thead><tr><th>Koperta</th><th class="num">Kwota</th><th>Rachunek</th><th>Tytuł</th></tr></thead>
+  <tbody>
+  {% for p in pending.transfers %}
+    <tr data-envelope="{{ p.transfer.envelope.value }}">
+      <td>{{ p.transfer.envelope.label }}</td>
+      <td class="num"><code class="copy">{{ p.transfer.amount.format(currency=False) }}</code>
+        <button type="button" class="secondary copy-btn" data-copy="{{ p.transfer.amount.format(currency=False) }}">Kopiuj</button></td>
+      <td>
+        {% if p.target_account %}
+          <code class="copy">{{ p.target_account }}</code>
+          <button type="button" class="secondary copy-btn" data-copy="{{ p.target_account }}">Kopiuj</button>
+        {% else %}
+          <span class="notice warn missing-account">Brak rachunku – uzupełnij w <a href="/settings">Ustawieniach</a>.</span>
+        {% endif %}
+      </td>
+      <td><code class="copy">{{ p.transfer.title }}</code>
+        <button type="button" class="secondary copy-btn" data-copy="{{ p.transfer.title }}">Kopiuj</button></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<form method="post" action="/settlement" class="settle-form" onsubmit="return confirm('Oznaczyć te dochody jako rozliczone?')">
+  {% for id in pending.income_ids %}<input type="hidden" name="income_id" value="{{ id }}">{% endfor %}
+  {% for e, amount in pending.expected.items() %}<input type="hidden" name="expected_{{ e.value }}" value="{{ amount.grosze }}">{% endfor %}
+  <button type="submit" id="settle">Rozliczone</button>
+  <span class="muted">Kliknij po wykonaniu przelewów.</span>
+</form>
+
+<details class="pending-incomes">
+  <summary>Dochody w tym rozliczeniu</summary>
+  <ul>{% for i in pending.incomes %}<li>{{ i.date.isoformat() }} – {{ i.source }}: {{ i.amount|money }}</li>{% endfor %}</ul>
+</details>
+{% else %}
+<p class="muted" id="nothing">Nie ma przelewów do wykonania.</p>
+{% endif %}
+
+<h2>Historia</h2>
+{% if history %}
+<table id="history">
+  <thead><tr><th>Data</th>{% for e in envelopes %}<th class="num">{{ e.label }}</th>{% endfor %}<th class="num">Dochody</th><th></th></tr></thead>
+  <tbody>
+  {% for s in history %}
+    <tr id="settlement-{{ s.id }}">
+      <td>{{ s.date.isoformat() }}</td>
+      {% for e in envelopes %}<td class="num">{{ s.lines.get(e)|money }}</td>{% endfor %}
+      <td class="num">{{ s.income_count }}</td>
+      <td>{% if s.is_latest %}
+        <form class="inline" method="post" action="/settlement/{{ s.id }}/undo" onsubmit="return confirm('Cofnąć to rozliczenie?')">
+          <button type="submit" class="link">Cofnij</button>
+        </form>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Brak rozliczeń.</p>
+{% endif %}
+
+<script>
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      navigator.clipboard.writeText(btn.dataset.copy).then(function () {
+        const label = btn.textContent;
+        btn.textContent = "Skopiowano";
+        setTimeout(function () { btn.textContent = label; }, 1200);
+      });
+    });
+  });
+</script>
+{% endblock %}
