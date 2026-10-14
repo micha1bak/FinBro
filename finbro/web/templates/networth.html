@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Majątek – FinBro{% endblock %}
+{% block head %}<script src="{{ url_for('static', path='vendor/chart-4.5.1.umd.min.js') }}" defer></script>{% endblock %}
+{% block content %}
+<h1>Majątek</h1>
+
+{% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
+{% if recorded %}
+<div class="notice ok" id="recorded">
+  Zapisano saldo {{ recorded.entry.account.label }} na {{ recorded.entry.date.isoformat() }}: {{ recorded.entry.amount|money }}.
+  {% if recorded.difference is not none %}
+    Różnica względem wyliczenia: <strong id="difference">{{ recorded.difference|money(plus=True) }}</strong>
+    ({{ "zysk" if recorded.difference.grosze > 0 else ("strata" if recorded.difference.grosze < 0 else "bez zmian") }}).
+  {% endif %}
+</div>
+{% endif %}
+
+{% if overview.is_empty %}
+<div class="notice warn" id="start">
+  Wpisz salda początkowe PKO, XTB i Obligacji. Później salda XTB i Obligacji będą rosły same
+  o rozliczone przelewy, a saldo PKO aktualizujesz ręcznie.
+</div>
+{% else %}
+<div class="cards">
+  {% for a in accounts %}
+  <div class="card"><div class="muted">{{ a.label }}</div>
+    <div class="value" id="balance-{{ a.value }}">{% if overview.current.balances[a] is none %}–{% else %}{{ overview.current.balances[a]|money }}{% endif %}</div></div>
+  {% endfor %}
+  <div class="card total"><div class="muted">Razem</div><div class="value" id="total">{{ overview.current.total|money }}</div>
+    <div class="muted">aktualizacja {{ overview.last_update.isoformat() }}</div></div>
+</div>
+{% endif %}
+
+<form class="panel add-income" method="post" action="/networth/balance">
+  <h2>Saldo faktyczne</h2>
+  <label>Konto <select name="account">
+    {% for a in accounts %}<option value="{{ a.value }}"{% if form.account == a.value %} selected{% endif %}>{{ a.label }}</option>{% endfor %}
+  </select></label>
+  <label>Data <input type="date" name="date" value="{{ form.date }}" required></label>
+  <label>Saldo <input type="text" name="amount" value="{{ form.amount }}" inputmode="decimal" required size="12" placeholder="0,00"></label>
+  <button type="submit">Zapisz</button>
+  <p class="muted">Saldo XTB i Obligacji pokaże różnicę względem wyliczenia (zysk lub strata). Wpis z tego samego dnia zastępuje poprzedni.</p>
+</form>
+
+{% if overview.timeline %}
+<h2>Majątek w czasie</h2>
+<div class="panel"><canvas id="networth-chart" height="110" aria-label="Suma majątku w czasie"></canvas></div>
+<script type="application/json" id="chart-data">{{ chart_json|safe }}</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (typeof Chart === "undefined") { return; }
+    const data = JSON.parse(document.getElementById("chart-data").textContent);
+    const zl = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" });
+    new Chart(document.getElementById("networth-chart"), {
+      type: "line",
+      data: { labels: data.labels, datasets: [{ label: "Majątek", data: data.totals, borderColor: "#1f6f5c", tension: 0.2 }] },
+      options: {
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => zl.format(ctx.parsed.y) } } },
+        scales: { y: { ticks: { callback: (v) => zl.format(v) } } },
+      },
+    });
+  });
+</script>
+{% endif %}
+
+{% if overview.entries %}
+<h2>Wpisane salda</h2>
+<table id="entries">
+  <thead><tr><th>Data</th><th>Konto</th><th class="num">Saldo</th><th class="num">Różnica</th></tr></thead>
+  <tbody>
+  {% for v in overview.entries %}
+    <tr><td>{{ v.entry.date.isoformat() }}</td><td>{{ v.entry.account.label }}</td>
+      <td class="num">{{ v.entry.amount|money }}</td><td class="num">{{ v.difference|money(plus=True) }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

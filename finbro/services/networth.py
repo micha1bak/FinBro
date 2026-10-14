@@ -69,12 +69,13 @@ class NetWorthService:
         return EntryView(entry, self._difference(entry, self.entries(), self.contributions()))
 
     def overview(self, day: date) -> Overview:
+        """Przegląd majątku; saldo bieżące na ``day`` albo na dzień najpóźniejszego wpisu, jeśli późniejszy."""
         entries, contributions = self.entries(), self.contributions()
         relevant = [c for c in contributions if c.envelope in NET_WORTH_ACCOUNTS]
-        days = [e.date for e in entries] + [c.date for c in relevant]
+        last_update = max([e.date for e in entries] + [c.date for c in relevant], default=None)
         return Overview(
-            current=snapshot(entries, contributions, day),
-            last_update=max(days, default=None),
+            current=snapshot(entries, contributions, max(day, last_update) if last_update else day),
+            last_update=last_update,
             timeline=timeline(entries, contributions),
             entries=[EntryView(e, self._difference(e, entries, contributions)) for e in reversed(entries)],
         )

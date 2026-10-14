@@ -70,3 +70,8 @@ def test_undo_settlement_lowers_computed_balance(db_session, networth):
 def test_invalid_entry(networth, account, amount, message):
     with pytest.raises(NetWorthError, match=message):
         networth.record(account, OCT12, amount)
+
+
+def test_current_balance_includes_entries_dated_after_day(networth):
+    networth.record(X, date(2026, 11, 1), zl("1560"))
+    assert networth.overview(OCT19).current.balances[X] == zl("1560")
