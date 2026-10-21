@@ -11,6 +11,7 @@ backups/
 !tests/fixtures/**/*.csv
 # Pliki konfiguracyjne IDE w formacie XML są dozwolone
 !.idea/**/*.xml
+!.run/*.run.xml
 
 # --- Sekrety ---
 .env

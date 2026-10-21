@@ -95,8 +95,14 @@ nierozliczonych dochodów od tej daty. Rozliczone dochody zachowują swój podzi
 
 ## Praca deweloperska w `.venv`
 
-Aplikację i testy można uruchamiać lokalnie (np. w PyCharmie), korzystając z bazy
+Aplikację i testy można uruchamiać lokalnie (np. w PyCharmie), korzystając z serwera bazy
 z `docker compose`. Zmienne `DATABASE_URL` i `TEST_DATABASE_URL` są wczytywane z `.env`.
+
+Na tym serwerze są trzy osobne bazy: `finbro` (dane aplikacji z kontenera), `finbro_dev`
+(aplikacja uruchamiana z `.venv`) i `finbro_test` (testy). Dane wpisane w wersji deweloperskiej
+i próbne migracje nie dotykają więc danych z `finbro`. Bazy `finbro_dev` i `finbro_test` tworzy
+skrypt `docker/db-init/01-create-databases.sh`: sam przy inicjalizacji pustego wolumenu, a na
+istniejącym wolumenie przy każdym `poe db` (albo poleceniem z listy niżej).
 
 ```bash
 python -m venv .venv
@@ -107,7 +113,11 @@ python -m venv .venv
 ```
 
 ```bash
-docker compose up -d db
+docker compose up -d --wait db
+```
+
+```bash
+docker compose exec -T db sh /docker-entrypoint-initdb.d/01-create-databases.sh
 ```
 
 ```bash
@@ -135,6 +145,18 @@ Na Linuksie: `.venv/bin/poe dev`, a po aktywacji `.venv` wystarczy `poe dev`. Po
 `poe db`, `poe migrate`, `poe serve` i `poe test` (argumenty trafiają do pytest, np.
 `poe test tests/domain`). Listę pokazuje `poe --help`.
 
+### Zmyślone dane w bazie deweloperskiej
+
+```bash
+.venv/Scripts/poe seed
+```
+
+Kasuje dane w `finbro_dev` i wpisuje rok przykładowych dochodów (wynagrodzenie, premie, zlecenia,
+gotówka), comiesięczne rozliczenia, zmianę planu podziału w połowie okresu, salda wszystkich kont
+z zyskiem albo stratą na XTB i Obligacjach oraz rachunki kopert. Dochody od ostatniego rozliczenia
+zostają nierozliczone. Opcje: `--months 24` (dłuższy okres), `--seed 7` (inne losowanie). Skrypt
+(`finbro/dev_seed.py`) odmawia pracy na bazie, której nazwa nie kończy się na `_dev`.
+
 ### Testy
 
 ```bash
@@ -142,8 +164,7 @@ Na Linuksie: `.venv/bin/poe dev`, a po aktywacji `.venv` wystarczy `poe dev`. Po
 ```
 
 Testy domeny (podział, przelewy, salda) nie potrzebują bazy. Testy integracyjne korzystają z bazy `finbro_test`
-na serwerze z `docker compose` (tworzy ją skrypt `docker/db-init` przy pierwszym
-uruchomieniu wolumenu). Schemat powstaje migracjami na początku każdej sesji testów,
+na serwerze z `docker compose` (tworzy ją ten sam skrypt co `finbro_dev`). Schemat powstaje migracjami na początku każdej sesji testów,
 a każdy test działa w transakcji wycofywanej na końcu. Gdy baza nie działa, testy
 kończą się komunikatem z poleceniem `docker compose up -d db`.
 

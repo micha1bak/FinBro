@@ -28,10 +28,13 @@ dev = [
 
 # Skróty poleceń deweloperskich (jak skrypty npm): poe dev, poe test, poe --help.
 [tool.poe.tasks]
-db = { cmd = "docker compose up -d --wait db", help = "Uruchom bazę z docker compose i poczekaj, aż będzie gotowa" }
+_db-up = "docker compose up -d --wait db"
+_db-create = "docker compose exec -T db sh /docker-entrypoint-initdb.d/01-create-databases.sh"
+db = { sequence = ["_db-up", "_db-create"], help = "Uruchom bazę z docker compose i utwórz brakujące bazy finbro_dev i finbro_test" }
 migrate = { cmd = "alembic upgrade head", help = "Wykonaj migracje bazy" }
 serve = { cmd = "uvicorn finbro.web.app:create_app --factory --reload --host 127.0.0.1 --port 8000", help = "Uruchom aplikację z przeładowaniem po zmianach" }
 dev = { sequence = ["db", "migrate", "serve"], help = "Baza, migracje i aplikacja deweloperska na http://127.0.0.1:8000" }
+seed = { cmd = "python -m finbro.dev_seed", help = "Zastąp dane w bazie finbro_dev zmyślonymi (np. poe seed --months 24)" }
 test = { cmd = "pytest", help = "Uruchom testy (argumenty przekazywane do pytest)" }
 
 [tool.setuptools.packages.find]
