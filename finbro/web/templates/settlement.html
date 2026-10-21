@@ -1,65 +1,81 @@
 {% extends "base.html" %}
 {% block title %}Rozliczenie – FinBro{% endblock %}
 {% block content %}
-<h1>Rozliczenie</h1>
+<div class="page-head"><h1>Rozliczenie</h1></div>
 
 {% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
 {% if done %}<div class="notice ok" id="done">Rozliczone. Dochody oznaczone jako rozliczone.</div>{% endif %}
 
 {% if pending.transfers %}
-<p>Przelewy dla <strong>{{ pending.incomes|length }}</strong> nierozliczonych dochodów
-  na łączną kwotę {{ pending.incomes|sum(attribute='amount.grosze')|money }}. Część PKO zostaje na koncie głównym.</p>
-<p class="muted" id="pooled">Kwoty kopert są liczone od sumy dochodów (osobno dla każdego planu podziału) i zaokrąglane
-  do pełnych złotych. Po rozliczeniu podział pojedynczego dochodu może zmienić się o 1 zł, żeby zgadzał się z przelewami.</p>
+<div class="cards">
+  <div class="card hero">
+    <div class="label">Do przelania</div>
+    <div class="value">{{ pending.transfers|sum(attribute='transfer.amount.grosze')|money }}</div>
+    <div class="sub">{{ pending.transfers|length|plural('przelew', 'przelewy', 'przelewów') }} na koperty</div>
+  </div>
+  <div class="card">
+    <div class="label">Nierozliczone dochody</div>
+    <div class="value">{{ pending.incomes|sum(attribute='amount.grosze')|money }}</div>
+    <div class="sub">{{ pending.incomes|length|plural('dochód', 'dochody', 'dochodów') }} · część PKO zostaje na koncie głównym</div>
+  </div>
+</div>
+
+<div class="table-wrap">
 <table id="transfers">
   <thead><tr><th>Koperta</th><th class="num">Kwota</th><th>Rachunek</th><th>Tytuł</th></tr></thead>
   <tbody>
   {% for p in pending.transfers %}
     <tr data-envelope="{{ p.transfer.envelope.value }}">
-      <td>{{ p.transfer.envelope.label }}</td>
-      <td class="num"><code class="copy">{{ p.transfer.amount.format(currency=False) }}</code>
-        <button type="button" class="secondary copy-btn" data-copy="{{ p.transfer.amount.format(currency=False) }}">Kopiuj</button></td>
-      <td>
+      <td data-label="Koperta"><span class="env env-{{ p.transfer.envelope.value|lower }}"><strong>{{ p.transfer.envelope.label }}</strong></span></td>
+      <td class="num" data-label="Kwota"><span class="copy-cell"><code class="copy">{{ p.transfer.amount.format(currency=False) }}</code>
+        <button type="button" class="secondary copy-btn" data-copy="{{ p.transfer.amount.format(currency=False) }}">Kopiuj</button></span></td>
+      <td data-label="Rachunek">
         {% if p.target_account %}
-          <code class="copy">{{ p.target_account }}</code>
-          <button type="button" class="secondary copy-btn" data-copy="{{ p.target_account }}">Kopiuj</button>
+          <span class="copy-cell"><code class="copy">{{ p.target_account }}</code>
+          <button type="button" class="secondary copy-btn" data-copy="{{ p.target_account }}">Kopiuj</button></span>
         {% else %}
           <span class="notice warn missing-account">Brak rachunku – uzupełnij w <a href="/settings">Ustawieniach</a>.</span>
         {% endif %}
       </td>
-      <td><code class="copy">{{ p.transfer.title }}</code>
-        <button type="button" class="secondary copy-btn" data-copy="{{ p.transfer.title }}">Kopiuj</button></td>
+      <td data-label="Tytuł"><span class="copy-cell"><code class="copy">{{ p.transfer.title }}</code>
+        <button type="button" class="secondary copy-btn" data-copy="{{ p.transfer.title }}">Kopiuj</button></span></td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
+</div>
+<p class="muted" id="pooled">Kwoty kopert są liczone od sumy dochodów (osobno dla każdego planu podziału) i zaokrąglane
+  do pełnych złotych. Po rozliczeniu podział pojedynczego dochodu może zmienić się o 1 zł, żeby zgadzał się z przelewami.</p>
 
-<form method="post" action="/settlement" class="settle-form" onsubmit="return confirm('Oznaczyć te dochody jako rozliczone?')">
-  {% for id in pending.income_ids %}<input type="hidden" name="income_id" value="{{ id }}">{% endfor %}
-  {% for e, amount in pending.expected.items() %}<input type="hidden" name="expected_{{ e.value }}" value="{{ amount.grosze }}">{% endfor %}
-  <button type="submit" id="settle">Rozliczone</button>
-  <span class="muted">Kliknij po wykonaniu przelewów.</span>
-</form>
-
-<details class="pending-incomes">
-  <summary>Dochody w tym rozliczeniu</summary>
-  <ul>{% for i in pending.incomes %}<li>{{ i.date.isoformat() }} – {{ i.source }}: {{ i.amount|money }}</li>{% endfor %}</ul>
-</details>
+<div class="panel">
+  <form method="post" action="/settlement" class="settle-form" onsubmit="return confirm('Oznaczyć te dochody jako rozliczone?')">
+    {% for id in pending.income_ids %}<input type="hidden" name="income_id" value="{{ id }}">{% endfor %}
+    {% for e, amount in pending.expected.items() %}<input type="hidden" name="expected_{{ e.value }}" value="{{ amount.grosze }}">{% endfor %}
+    <p class="muted">Wykonaj przelewy w banku, a potem oznacz dochody jako rozliczone.</p>
+    <button type="submit" id="settle" class="large">✓ Rozliczone</button>
+  </form>
+  <details class="pending-incomes">
+    <summary>Dochody w tym rozliczeniu ({{ pending.incomes|length }})</summary>
+    <ul>{% for i in pending.incomes %}<li>{{ i.date.isoformat() }} – {{ i.source }}: {{ i.amount|money }}</li>{% endfor %}</ul>
+  </details>
+</div>
 {% else %}
-<p class="muted" id="nothing">Nie ma przelewów do wykonania.</p>
+<div class="empty" id="nothing"><strong>Nie ma przelewów do wykonania.</strong>Wszystkie dochody są rozliczone. Nowe pojawią się tu po dodaniu w widoku Dochody.</div>
 {% endif %}
 
 <h2>Historia</h2>
 {% if history %}
+<div class="table-wrap">
 <table id="history">
-  <thead><tr><th>Data</th>{% for e in envelopes %}<th class="num">{{ e.label }}</th>{% endfor %}<th class="num">Dochody</th><th></th></tr></thead>
+  <thead><tr><th>Data</th>{% for e in envelopes %}<th class="num"><span class="env env-{{ e.value|lower }}">{{ e.label }}</span></th>{% endfor %}<th class="num">Razem</th><th class="num">Dochody</th><th></th></tr></thead>
   <tbody>
   {% for s in history %}
     <tr id="settlement-{{ s.id }}">
-      <td>{{ s.date.isoformat() }}</td>
+      <td class="date">{{ s.date.isoformat() }}</td>
       {% for e in envelopes %}<td class="num">{{ s.lines.get(e)|money }}</td>{% endfor %}
+      <td class="num"><strong>{{ s.total|money }}</strong></td>
       <td class="num">{{ s.income_count }}</td>
-      <td>{% if s.is_latest %}
+      <td class="actions">{% if s.is_latest %}
         <form class="inline" method="post" action="/settlement/{{ s.id }}/undo" onsubmit="return confirm('Cofnąć to rozliczenie?')">
           <button type="submit" class="link">Cofnij</button>
         </form>{% endif %}</td>
@@ -67,6 +83,7 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
 <p class="muted">Brak rozliczeń.</p>
 {% endif %}
@@ -76,8 +93,9 @@
     btn.addEventListener("click", function () {
       navigator.clipboard.writeText(btn.dataset.copy).then(function () {
         const label = btn.textContent;
-        btn.textContent = "Skopiowano";
-        setTimeout(function () { btn.textContent = label; }, 1200);
+        btn.textContent = "Skopiowano ✓";
+        btn.classList.add("copied");
+        setTimeout(function () { btn.textContent = label; btn.classList.remove("copied"); }, 1200);
       });
     });
   });

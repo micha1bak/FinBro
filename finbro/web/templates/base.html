@@ -3,19 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}FinBro{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', path='finbro.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body>
+  {% set path = request.url.path %}
+  {% macro nav_link(href, label, active) %}<a href="{{ href }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>{% endmacro %}
   <header class="topbar">
-    <a class="brand" href="/">FinBro</a>
-    <nav>
-      <a href="/">Dochody</a>
-      <a href="/settlement">Rozliczenie</a>
-      <a href="/networth">Majątek</a>
-      <a href="/settings">Ustawienia</a>
-    </nav>
+    <div class="topbar-inner">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">F</span><span class="brand-name">FinBro</span></a>
+      <nav aria-label="Widoki">
+        {{ nav_link("/", "Dochody", path == "/" or path.startswith("/incomes")) }}
+        {{ nav_link("/settlement", "Rozliczenie", path.startswith("/settlement")) }}
+        {{ nav_link("/networth", "Majątek", path.startswith("/networth")) }}
+        {{ nav_link("/settings", "Ustawienia", path.startswith("/settings")) }}
+      </nav>
+    </div>
   </header>
   <main>
     {% block content %}{% endblock %}
