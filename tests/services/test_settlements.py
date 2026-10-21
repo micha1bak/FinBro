@@ -9,7 +9,7 @@ from finbro.domain.money import Money
 from finbro.services.incomes import IncomeService
 from finbro.services.settlements import SettlementError, SettlementService
 
-W, X, O = Envelope.WAKACJE, Envelope.XTB, Envelope.OBLIGACJE
+P, W, X, O = Envelope.PKO, Envelope.WAKACJE, Envelope.XTB, Envelope.OBLIGACJE
 DAY = date(2026, 10, 19)
 
 
@@ -109,3 +109,39 @@ def test_history_newest_first(incomes, settlements, two_incomes):
     assert [(s.id, s.income_count, s.is_latest) for s in history] == [(second.id, 1, True), (first.id, 2, False)]
     assert history[0].lines == {W: zl("25"), X: zl("13"), O: zl("13")}
     assert history[0].total == zl("51")
+
+
+@pytest.fixture
+def equal_incomes(incomes):
+    return [incomes.add(date(2026, 10, 15), "Później", zl("174")), incomes.add(date(2026, 10, 14), "Zlecenie", zl("174"))]
+
+
+
+def test_pending_transfers_are_rounded_from_the_sum(settlements, equal_incomes):
+    # 348 × 25% = 87 zł, a nie 44 + 44 z podziałów pojedynczych dochodów.
+    pending = settlements.pending(DAY)
+    assert pending.expected == {W: zl("87"), X: zl("44"), O: zl("44")}
+
+
+def test_settle_freezes_split_distributed_from_transfers(db_session, incomes, settlements, equal_incomes):
+    later, earlier = equal_incomes
+    view = settle_pending(settlements)
+    assert view.lines == {W: zl("87"), X: zl("44"), O: zl("44")}
+    # Remis reszt (43,50 + 43,50): brakujący złoty Wakacji dostaje wcześniejszy dochód, choć wpisany później.
+    assert incomes.get(earlier.id).split == {P: zl("86"), W: zl("44"), X: zl("22"), O: zl("22")}
+    assert incomes.get(later.id).split == {P: zl("87"), W: zl("43"), X: zl("22"), O: zl("22")}
+    assert incomes.month(2026, 10).totals == {P: zl("173"), W: zl("87"), X: zl("44"), O: zl("44")}
+
+
+def test_settlement_lines_equal_frozen_shares(db_session, incomes, settlements, two_incomes, equal_incomes):
+    incomes.add(date(2026, 10, 16), "Drobne", zl("1,98"))
+    view = settle_pending(settlements)
+    shares = db_session.scalars(select(IncomeShare).where(IncomeShare.settlement_id == view.id)).all()
+    for envelope in (W, X, O):
+        assert sum(s.amount for s in shares if s.envelope == envelope.value) == view.lines[envelope].grosze
+
+
+def test_undo_restores_preview_split(incomes, settlements, equal_incomes):
+    later, _ = equal_incomes
+    settlements.undo(settle_pending(settlements).id)
+    assert incomes.get(later.id).split == {P: zl("86"), W: zl("44"), X: zl("22"), O: zl("22")}

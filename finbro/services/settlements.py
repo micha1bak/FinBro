@@ -14,7 +14,7 @@ from finbro.db.models import Income, IncomeShare, Settlement, SettlementLine
 from finbro.domain.allocation import plan_for
 from finbro.domain.envelopes import Envelope
 from finbro.domain.money import Money
-from finbro.domain.transfers import PlannedIncome, Transfer, transfers
+from finbro.domain.transfers import PlannedIncome, Transfer, distribute, transfers
 from finbro.services.incomes import IncomeService, IncomeView
 from finbro.services.settings import SettingsService
 
@@ -69,17 +69,21 @@ class SettlementService:
         )
 
     def settle(self, income_ids: Sequence[int], expected: Mapping[Envelope, Money], day: date) -> SettlementView:
-        """Rozlicza dokładnie wskazane dochody, jeśli od wyświetlenia listy nic się nie zmieniło."""
+        """Rozlicza dokładnie wskazane dochody, jeśli od wyświetlenia listy nic się nie zmieniło.
+
+        Zamrożony podział dochodów to rozdział kwot przelewów (D13), więc sumuje się do linii rozliczenia.
+        """
         ids = sorted(set(income_ids))
         if not ids:
             raise SettlementError("Brak dochodów do rozliczenia.")
+        # Kolejność (data, id) rozstrzyga remisy przy rozdziale kwot kopert na dochody.
         locked = self.session.scalars(
-            select(Income).where(Income.id.in_(ids)).order_by(Income.id).with_for_update()
+            select(Income).where(Income.id.in_(ids)).order_by(Income.date, Income.id).with_for_update()
         ).all()
-        if [r.id for r in locked if r.settlement_id is None] != ids:
+        if sorted(r.id for r in locked if r.settlement_id is None) != ids:
             raise SettlementError("Lista dochodów zmieniła się od wyświetlenia. Odśwież widok i sprawdź przelewy.")
-        views = IncomeService(self.session).views(locked)
-        current = transfers(self._planned(views), day)
+        planned = self._planned(IncomeService(self.session).views(locked))
+        current = transfers(planned, day)
         if {t.envelope: t.amount for t in current} != dict(expected):
             raise SettlementError("Kwoty przelewów zmieniły się od wyświetlenia. Odśwież widok i sprawdź przelewy.")
 
@@ -88,8 +92,8 @@ class SettlementService:
         self.session.flush()
         for t in current:
             self.session.add(SettlementLine(settlement_id=settlement.id, envelope=t.envelope.value, amount=t.amount.grosze))
-        for view, row in zip(views, locked, strict=True):
-            for envelope, amount in view.split.items():
+        for parts, row in zip(distribute(planned), locked, strict=True):
+            for envelope, amount in parts.items():
                 self.session.add(
                     IncomeShare(income_id=row.id, envelope=envelope.value, settlement_id=settlement.id, amount=amount.grosze)
                 )
