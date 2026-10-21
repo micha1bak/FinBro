@@ -5,7 +5,6 @@ import pytest
 from finbro.domain.envelopes import Envelope
 from finbro.domain.incomes import IncomeForm
 from finbro.domain.money import Money
-from finbro.domain.transfers import transfers
 from finbro.services.incomes import IncomeError, IncomeService
 from finbro.services.settlements import SettlementService
 
@@ -23,9 +22,9 @@ def incomes(db_session):
 
 
 def settle(db_session, incomes, income_id):
-    """Rozlicza pojedynczy dochód serwisem rozliczeń."""
+    """Rozlicza pojedynczy dochód serwisem rozliczeń (przelewy to jego własny podział)."""
     view = incomes.get(income_id)
-    expected = {t.envelope: t.amount for t in transfers([view.split], OCT14)}
+    expected = {e: amount for e, amount in view.split.items() if e.is_transfer and amount.is_positive}
     SettlementService(db_session).settle([income_id], expected, OCT14)
 
 

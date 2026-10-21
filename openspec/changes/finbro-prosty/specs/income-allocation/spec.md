@@ -29,7 +29,7 @@ System SHALL zapisywać przy każdym dochodzie formę: wpływ na PKO albo gotów
 - **THEN** dochód ma formę PKO
 
 ### Requirement: Podział dochodu na koperty
-System SHALL dzielić każdy dochód według planu obowiązującego w dniu dochodu. Kwota każdej koperty poza PKO to iloczyn kwoty i udziału zaokrąglony do pełnych złotych (połówki w górę). PKO dostaje resztę, więc suma podziału zawsze równa się kwocie dochodu, co do grosza.
+System SHALL dzielić każdy dochód według planu obowiązującego w dniu dochodu. Kwota każdej koperty poza PKO to iloczyn kwoty i udziału zaokrąglony do pełnych złotych (połówki w górę). PKO dostaje resztę, więc suma podziału zawsze równa się kwocie dochodu, co do grosza. Podział nierozliczonego dochodu jest podglądem. Przelewy i podział zamrożony przy rozliczeniu są liczone od sumy rozliczanych dochodów (`transfer-settlement`), więc zamrożony podział może różnić się od podglądu o pełne złote, a jego suma dalej równa się kwocie dochodu.
 
 #### Scenario: Podział z groszami
 - **WHEN** dochód wynosi 2401,30 zł przy planie PKO 50%, Wakacje 25%, XTB 12,5%, Obligacje 12,5%
@@ -38,6 +38,10 @@ System SHALL dzielić każdy dochód według planu obowiązującego w dniu docho
 #### Scenario: Zaokrąglenie połówek
 - **WHEN** dochód wynosi 174,00 zł przy tym samym planie
 - **THEN** podział to Wakacje 44 zł (43,50), XTB 22 zł (21,75), Obligacje 22 zł i PKO 86 zł
+
+#### Scenario: Podział po wspólnym rozliczeniu
+- **WHEN** dwa dochody po 174,00 zł z 2026-10-14 i 2026-10-15 zostały rozliczone razem przy tym samym planie
+- **THEN** lista dochodów pokazuje podziały Wakacje 44 zł, XTB 22 zł, Obligacje 22 zł, PKO 86 zł oraz Wakacje 43 zł, XTB 22 zł, Obligacje 22 zł, PKO 87 zł, a suma Wakacji w październiku to 87 zł
 
 ### Requirement: Plan podziału z datą obowiązywania
 System SHALL przechowywać plan podziału jako udziały procentowe kopert PKO, Wakacje, XTB i Obligacje, których suma MUST wynosić 100%. Nowy plan obowiązuje od wskazanej daty i SHALL zmieniać podział wyłącznie nierozliczonych dochodów z tą datą lub późniejszą.

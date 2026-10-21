@@ -11,9 +11,10 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from finbro.db.models import Income, IncomeShare, Settlement, SettlementLine
+from finbro.domain.allocation import plan_for
 from finbro.domain.envelopes import Envelope
 from finbro.domain.money import Money
-from finbro.domain.transfers import Transfer, transfers
+from finbro.domain.transfers import PlannedIncome, Transfer, transfers
 from finbro.services.incomes import IncomeService, IncomeView
 from finbro.services.settings import SettingsService
 
@@ -64,7 +65,7 @@ class SettlementService:
         accounts = SettingsService(self.session).accounts()
         return Pending(
             incomes=incomes,
-            transfers=[PendingTransfer(t, accounts.get(t.envelope)) for t in transfers((i.split for i in incomes), day)],
+            transfers=[PendingTransfer(t, accounts.get(t.envelope)) for t in transfers(self._planned(incomes), day)],
         )
 
     def settle(self, income_ids: Sequence[int], expected: Mapping[Envelope, Money], day: date) -> SettlementView:
@@ -78,7 +79,7 @@ class SettlementService:
         if [r.id for r in locked if r.settlement_id is None] != ids:
             raise SettlementError("Lista dochodów zmieniła się od wyświetlenia. Odśwież widok i sprawdź przelewy.")
         views = IncomeService(self.session).views(locked)
-        current = transfers((v.split for v in views), day)
+        current = transfers(self._planned(views), day)
         if {t.envelope: t.amount for t in current} != dict(expected):
             raise SettlementError("Kwoty przelewów zmieniły się od wyświetlenia. Odśwież widok i sprawdź przelewy.")
 
@@ -118,6 +119,10 @@ class SettlementService:
             if view.id == settlement_id:
                 return view
         raise SettlementError("Nie ma takiego rozliczenia.")
+
+    def _planned(self, incomes: Sequence[IncomeView]) -> list[PlannedIncome]:
+        plans = IncomeService(self.session).plans()
+        return [PlannedIncome(i.amount, plan_for(plans, i.date)) for i in incomes]
 
     def undo(self, settlement_id: int) -> None:
         """Cofa najnowsze rozliczenie: dochody wracają do rozliczenia, znika zamrożony podział."""
