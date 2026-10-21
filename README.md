@@ -121,6 +121,20 @@ docker compose up -d db
 Jeśli aplikacja działa też w kontenerze, zatrzymaj ją wcześniej (`docker compose stop app`),
 bo obie używają portu 8000.
 
+### Skróty poleceń (Poe the Poet)
+
+Zadania z `[tool.poe.tasks]` w `pyproject.toml` działają jak skrypty npm. Poe instaluje się
+z zależnościami deweloperskimi i sam korzysta z `.venv`. Bazę, migracje i aplikację
+uruchamia jedno polecenie:
+
+```bash
+.venv/Scripts/poe dev
+```
+
+Na Linuksie: `.venv/bin/poe dev`, a po aktywacji `.venv` wystarczy `poe dev`. Pozostałe zadania:
+`poe db`, `poe migrate`, `poe serve` i `poe test` (argumenty trafiają do pytest, np.
+`poe test tests/domain`). Listę pokazuje `poe --help`.
+
 ### Testy
 
 ```bash

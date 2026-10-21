@@ -23,7 +23,16 @@ dependencies = [
 dev = [
     "pytest>=9.1,<10.0",
     "hypothesis>=6.169,<7.0",
+    "poethepoet>=0.45,<1.0",
 ]
+
+# Skróty poleceń deweloperskich (jak skrypty npm): poe dev, poe test, poe --help.
+[tool.poe.tasks]
+db = { cmd = "docker compose up -d --wait db", help = "Uruchom bazę z docker compose i poczekaj, aż będzie gotowa" }
+migrate = { cmd = "alembic upgrade head", help = "Wykonaj migracje bazy" }
+serve = { cmd = "uvicorn finbro.web.app:create_app --factory --reload --host 127.0.0.1 --port 8000", help = "Uruchom aplikację z przeładowaniem po zmianach" }
+dev = { sequence = ["db", "migrate", "serve"], help = "Baza, migracje i aplikacja deweloperska na http://127.0.0.1:8000" }
+test = { cmd = "pytest", help = "Uruchom testy (argumenty przekazywane do pytest)" }
 
 [tool.setuptools.packages.find]
 include = ["finbro*"]
