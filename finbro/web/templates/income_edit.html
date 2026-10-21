@@ -1,16 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Edycja dochodu – FinBro{% endblock %}
 {% block content %}
-<h1>Edycja dochodu</h1>
+<div class="page-head"><h1>Edycja dochodu</h1></div>
 {% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
 <form class="panel" method="post" action="/incomes/{{ income.id }}">
-  <label>Data <input type="date" name="date" value="{{ form.date }}" required></label>
-  <label>Źródło <input type="text" name="source" value="{{ form.source }}" maxlength="200" required></label>
-  <label>Kwota <input type="text" name="amount" value="{{ form.amount }}" inputmode="decimal" required size="10"></label>
-  <span class="form-choice">Forma
-    {% for f in forms %}<label><input type="radio" name="form" value="{{ f.value }}"{% if form.form == f.value %} checked{% endif %}> {{ f.label }}</label>{% endfor %}
-  </span>
-  <button type="submit">Zapisz</button>
-  <a href="/?month={{ income.date.strftime('%Y-%m') }}">Anuluj</a>
+  <div class="fields">
+    <label class="field"><span>Data</span><input type="date" name="date" value="{{ form.date }}" required></label>
+    <label class="field grow"><span>Źródło</span><input type="text" name="source" value="{{ form.source }}" maxlength="200" required></label>
+    <label class="field"><span>Kwota</span><input type="text" class="amount" name="amount" value="{{ form.amount }}" inputmode="decimal" required size="10"></label>
+    <div class="field"><span class="field-label">Forma</span>
+      <span class="segmented form-choice">{% for f in forms %}<label><input type="radio" name="form" value="{{ f.value }}"{% if form.form == f.value %} checked{% endif %}> {{ f.label }}</label>{% endfor %}</span>
+    </div>
+    <button type="submit">Zapisz</button>
+    <a class="button secondary" href="/?month={{ income.date.strftime('%Y-%m') }}">Anuluj</a>
+  </div>
 </form>
 {% endblock %}

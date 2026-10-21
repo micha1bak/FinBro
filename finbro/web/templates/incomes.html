@@ -1,50 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Dochody – FinBro{% endblock %}
 {% block content %}
-<h1>Dochody</h1>
+<div class="page-head">
+  <h1>Dochody</h1>
+  <nav class="month-nav" aria-label="Miesiąc">
+    <a href="/?month={{ prev_month }}" aria-label="Poprzedni miesiąc">‹</a>
+    <strong id="month">{{ month_label }}</strong>
+    <a href="/?month={{ next_month }}" aria-label="Następny miesiąc">›</a>
+  </nav>
+</div>
 
 <form class="panel add-income" method="post" action="/incomes">
   <h2>Nowy dochód</h2>
-  <label>Data <input type="date" name="date" value="{{ form.date }}" required></label>
-  <label>Źródło <input type="text" name="source" value="{{ form.source }}" maxlength="200" required placeholder="np. Zlecenie"></label>
-  <label>Kwota <input type="text" name="amount" value="{{ form.amount }}" inputmode="decimal" required placeholder="0,00" size="10"></label>
-  <span class="form-choice">Forma
-    {% for f in forms %}<label><input type="radio" name="form" value="{{ f.value }}"{% if form.form == f.value %} checked{% endif %}> {{ f.label }}</label>{% endfor %}
-  </span>
-  <button type="submit">Dodaj</button>
+  <div class="fields">
+    <label class="field"><span>Data</span><input type="date" name="date" value="{{ form.date }}" required></label>
+    <label class="field grow"><span>Źródło</span><input type="text" name="source" value="{{ form.source }}" maxlength="200" required placeholder="np. Zlecenie"></label>
+    <label class="field"><span>Kwota</span><input type="text" class="amount" name="amount" value="{{ form.amount }}" inputmode="decimal" required placeholder="0,00" size="10"></label>
+    <div class="field"><span class="field-label">Forma</span>
+      <span class="segmented form-choice">{% for f in forms %}<label><input type="radio" name="form" value="{{ f.value }}"{% if form.form == f.value %} checked{% endif %}> {{ f.label }}</label>{% endfor %}</span>
+    </div>
+    <button type="submit">Dodaj dochód</button>
+  </div>
 </form>
 
 {% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
 
-<nav class="month-nav">
-  <a href="/?month={{ prev_month }}">←</a>
-  <strong id="month">{{ month_label }}</strong>
-  <a href="/?month={{ next_month }}">→</a>
-</nav>
-
 {% if summary.incomes %}
+{% set open = summary.incomes|rejectattr("settled")|list %}
+<div class="cards">
+  <div class="card hero">
+    <div class="label">Dochody w miesiącu</div>
+    <div class="value">{{ summary.total|money }}</div>
+    <p class="by-form" id="by-form">
+      {% for f in forms %}<span data-form="{{ f.value }}">{{ f.label }}: <strong>{{ summary.by_form[f]|money }}</strong></span>{% if not loop.last %} · {% endif %}{% endfor %}
+    </p>
+  </div>
+  <div class="card">
+    <div class="label">Do rozliczenia</div>
+    <div class="value">{{ open|length }} z {{ summary.incomes|length }}</div>
+    <div class="sub">{% if open %}<a href="/settlement">Przejdź do przelewów →</a>{% else %}wszystkie rozliczone{% endif %}</div>
+  </div>
+</div>
+
+<div class="table-wrap">
 <table id="incomes">
   <thead>
     <tr>
       <th>Data</th><th>Źródło</th><th>Forma</th><th class="num">Kwota</th>
-      {% for e in envelopes %}<th class="num">{{ e.label }}</th>{% endfor %}
+      {% for e in envelopes %}<th class="num"><span class="env env-{{ e.value|lower }}">{{ e.label }}</span></th>{% endfor %}
       <th>Status</th><th></th>
     </tr>
   </thead>
   <tbody>
   {% for income in summary.incomes %}
     <tr id="income-{{ income.id }}">
-      <td>{{ income.date.isoformat() }}</td>
-      <td>{{ income.source }}</td>
+      <td class="date">{{ income.date.isoformat() }}</td>
+      <td class="source">{{ income.source }}</td>
       <td class="form" data-form="{{ income.form.value }}">{{ income.form.label }}</td>
-      <td class="num">{{ income.amount|money }}</td>
+      <td class="num"><strong>{{ income.amount|money }}</strong></td>
       {% for e in envelopes %}<td class="num" data-envelope="{{ e.value }}">{{ income.split[e]|money }}</td>{% endfor %}
       <td>{% if income.settled %}<span class="status settled">rozliczony</span>{% else %}<span class="status open">do rozliczenia</span>{% endif %}</td>
       <td class="actions">
         {% if not income.settled %}
-        <a href="/incomes/{{ income.id }}/edit">Edytuj</a>
+        <a class="icon-btn" href="/incomes/{{ income.id }}/edit" title="Edytuj" aria-label="Edytuj dochód {{ income.source }}">✎</a>
         <form class="inline" method="post" action="/incomes/{{ income.id }}/delete" onsubmit="return confirm('Usunąć ten dochód?')">
-          <button type="submit" class="link">Usuń</button>
+          <button type="submit" class="icon-btn danger" title="Usuń" aria-label="Usuń dochód {{ income.source }}">✕</button>
         </form>
         {% endif %}
       </td>
@@ -60,10 +80,9 @@
     </tr>
   </tfoot>
 </table>
-<p class="by-form" id="by-form">
-  {% for f in forms %}<span data-form="{{ f.value }}">{{ f.label }}: <strong>{{ summary.by_form[f]|money }}</strong></span>{% if not loop.last %} · {% endif %}{% endfor %}
-</p>
+</div>
+{% if open %}<p class="muted">Podział nierozliczonych dochodów to podgląd. Przy rozliczeniu może zmienić się o 1 zł, żeby zgadzał się z przelewami.</p>{% endif %}
 {% else %}
-<p class="muted" id="empty">Brak dochodów w tym miesiącu.</p>
+<div class="empty" id="empty"><strong>Brak dochodów w tym miesiącu.</strong>Dodaj pierwszy dochód formularzem powyżej.</div>
 {% endif %}
 {% endblock %}

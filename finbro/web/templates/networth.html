@@ -2,7 +2,7 @@
 {% block title %}Majątek – FinBro{% endblock %}
 {% block head %}<script src="{{ url_for('static', path='vendor/chart-4.5.1.umd.min.js') }}" defer></script>{% endblock %}
 {% block content %}
-<h1>Majątek</h1>
+<div class="page-head"><h1>Majątek</h1></div>
 
 {% if error %}<div class="notice error" id="error">{{ error }}</div>{% endif %}
 {% if recorded %}
@@ -22,41 +22,71 @@
 </div>
 {% else %}
 <div class="cards">
+  <div class="card hero total"><div class="label">Majątek razem</div><div class="value" id="total">{{ overview.current.total|money }}</div>
+    <div class="sub">aktualizacja {{ overview.last_update.isoformat() }}</div></div>
   {% for a in accounts %}
-  <div class="card"><div class="muted">{{ a.label }}</div>
+  <div class="card"><div class="label">{{ a.label }}</div>
     <div class="value" id="balance-{{ a.value }}">{% if overview.current.balances[a] is none %}–{% else %}{{ overview.current.balances[a]|money }}{% endif %}</div></div>
   {% endfor %}
-  <div class="card total"><div class="muted">Razem</div><div class="value" id="total">{{ overview.current.total|money }}</div>
-    <div class="muted">aktualizacja {{ overview.last_update.isoformat() }}</div></div>
 </div>
 {% endif %}
 
-<form class="panel add-income" method="post" action="/networth/balance">
+<form class="panel" method="post" action="/networth/balance">
   <h2>Saldo faktyczne</h2>
-  <label>Konto <select name="account">
-    {% for a in accounts %}<option value="{{ a.value }}"{% if form.account == a.value %} selected{% endif %}>{{ a.label }}</option>{% endfor %}
-  </select></label>
-  <label>Data <input type="date" name="date" value="{{ form.date }}" required></label>
-  <label>Saldo <input type="text" name="amount" value="{{ form.amount }}" inputmode="decimal" required size="12" placeholder="0,00"></label>
-  <button type="submit">Zapisz</button>
+  <div class="fields">
+    <label class="field"><span>Konto</span><select name="account">
+      {% for a in accounts %}<option value="{{ a.value }}"{% if form.account == a.value %} selected{% endif %}>{{ a.label }}</option>{% endfor %}
+    </select></label>
+    <label class="field"><span>Data</span><input type="date" name="date" value="{{ form.date }}" required></label>
+    <label class="field"><span>Saldo</span><input type="text" class="amount" name="amount" value="{{ form.amount }}" inputmode="decimal" required size="12" placeholder="0,00"></label>
+    <button type="submit">Zapisz saldo</button>
+  </div>
   <p class="muted">Saldo XTB i Obligacji pokaże różnicę względem wyliczenia (zysk lub strata). Wpis z tego samego dnia zastępuje poprzedni.</p>
 </form>
 
 {% if overview.timeline %}
 <h2>Majątek w czasie</h2>
-<div class="panel"><canvas id="networth-chart" height="110" aria-label="Suma majątku w czasie"></canvas></div>
+<div class="panel chart-panel"><div class="chart-box"><canvas id="networth-chart" aria-label="Suma majątku w czasie" role="img"></canvas></div></div>
 <script type="application/json" id="chart-data">{{ chart_json|safe }}</script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     if (typeof Chart === "undefined") { return; }
     const data = JSON.parse(document.getElementById("chart-data").textContent);
+    const css = getComputedStyle(document.documentElement);
+    const token = (name) => css.getPropertyValue(name).trim();
     const zl = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" });
-    new Chart(document.getElementById("networth-chart"), {
+    const zlShort = new Intl.NumberFormat("pl-PL", { notation: "compact", maximumFractionDigits: 1 });
+    const canvas = document.getElementById("networth-chart");
+    const ctx = canvas.getContext("2d");
+    const fill = ctx.createLinearGradient(0, 0, 0, canvas.parentElement.clientHeight);
+    const rgba = (hex, alpha) => {
+      const n = parseInt(hex.slice(1), 16);
+      return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + alpha + ")";
+    };
+    fill.addColorStop(0, rgba(token("--accent"), 0.22));
+    fill.addColorStop(1, rgba(token("--accent"), 0));
+    Chart.defaults.color = token("--muted");
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    new Chart(canvas, {
       type: "line",
-      data: { labels: data.labels, datasets: [{ label: "Majątek", data: data.totals, borderColor: "#1f6f5c", tension: 0.2 }] },
+      data: { labels: data.labels, datasets: [{
+        label: "Majątek", data: data.totals, borderColor: token("--accent"), borderWidth: 2,
+        backgroundColor: fill, fill: "origin", tension: 0.25,
+        pointRadius: 0, pointHoverRadius: 5, pointHitRadius: 12,
+        pointHoverBackgroundColor: token("--accent"), pointHoverBorderColor: token("--surface"), pointHoverBorderWidth: 2,
+      }] },
       options: {
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => zl.format(ctx.parsed.y) } } },
-        scales: { y: { ticks: { callback: (v) => zl.format(v) } } },
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { displayColors: false, callbacks: { label: (c) => zl.format(c.parsed.y) } },
+        },
+        scales: {
+          x: { grid: { display: false }, border: { color: token("--line") }, ticks: { maxRotation: 0, autoSkipPadding: 16 } },
+          y: { grid: { color: token("--line") }, border: { display: false }, ticks: { callback: (v) => zlShort.format(v) + " zł" } },
+        },
       },
     });
   });
@@ -65,14 +95,17 @@
 
 {% if overview.entries %}
 <h2>Wpisane salda</h2>
+<div class="table-wrap">
 <table id="entries">
   <thead><tr><th>Data</th><th>Konto</th><th class="num">Saldo</th><th class="num">Różnica</th></tr></thead>
   <tbody>
   {% for v in overview.entries %}
-    <tr><td>{{ v.entry.date.isoformat() }}</td><td>{{ v.entry.account.label }}</td>
-      <td class="num">{{ v.entry.amount|money }}</td><td class="num">{{ v.difference|money(plus=True) }}</td></tr>
+    <tr><td class="date">{{ v.entry.date.isoformat() }}</td><td>{{ v.entry.account.label }}</td>
+      <td class="num">{{ v.entry.amount|money }}</td>
+      <td class="num{% if v.difference is not none and v.difference.grosze > 0 %} pos{% elif v.difference is not none and v.difference.grosze < 0 %} neg{% endif %}">{{ v.difference|money(plus=True) }}</td></tr>
   {% endfor %}
   </tbody>
 </table>
+</div>
 {% endif %}
 {% endblock %}
