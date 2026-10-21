@@ -9,6 +9,8 @@
 {% if pending.transfers %}
 <p>Przelewy dla <strong>{{ pending.incomes|length }}</strong> nierozliczonych dochodów
   na łączną kwotę {{ pending.incomes|sum(attribute='amount.grosze')|money }}. Część PKO zostaje na koncie głównym.</p>
+<p class="muted" id="pooled">Kwoty kopert są liczone od sumy dochodów (osobno dla każdego planu podziału) i zaokrąglane
+  do pełnych złotych. Po rozliczeniu podział pojedynczego dochodu może zmienić się o 1 zł, żeby zgadzał się z przelewami.</p>
 <table id="transfers">
   <thead><tr><th>Koperta</th><th class="num">Kwota</th><th>Rachunek</th><th>Tytuł</th></tr></thead>
   <tbody>

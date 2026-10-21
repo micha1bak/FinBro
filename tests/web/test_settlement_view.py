@@ -4,6 +4,7 @@ from datetime import date
 from finbro.db.models import EnvelopeAccount
 from finbro.domain.money import NBSP, Money
 from finbro.services.incomes import IncomeService
+from tests.web.test_incomes_view import cell
 
 TODAY = date.today().isoformat()
 
@@ -77,3 +78,17 @@ def test_undo_of_older_settlement_is_refused(client, db_session):
     ids = re.findall(r'id="settlement-(\d+)"', client.get("/settlement").text)
     response = client.post(f"/settlement/{ids[-1]}/undo")
     assert response.status_code == 400 and "najnowsze" in response.text
+
+
+def test_transfers_are_rounded_from_the_sum_of_incomes(client, db_session):
+    service = IncomeService(db_session)
+    earlier = service.add(date(2026, 10, 14), "Zlecenie", Money.parse("174"))
+    later = service.add(date(2026, 10, 15), "Zlecenie", Money.parse("174"))
+    page = client.get("/settlement").text
+    assert "87,00" in row(page, "WAKACJE") and "44,00" in row(page, "XTB") and 'id="pooled"' in page
+
+    client.post("/settlement", data=settle_form(page))
+    incomes = client.get("/?month=2026-10").text
+    assert cell(incomes, f"income-{earlier.id}", "WAKACJE") == f"44,00{NBSP}zł"
+    assert cell(incomes, f"income-{later.id}", "WAKACJE") == f"43,00{NBSP}zł"
+    assert cell(incomes, "month-total", "WAKACJE") == f"87,00{NBSP}zł"

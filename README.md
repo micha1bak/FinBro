@@ -6,8 +6,9 @@ Lokalna, jednoużytkownikowa aplikacja zastępująca arkusz finansów osobistych
   dzieli każdy dochód na koperty PKO (Życie) 50%, Wakacje 25%, XTB 12,5% i Obligacje 12,5%.
   Wakacje, XTB i Obligacje są zaokrąglane do pełnych złotych, a resztę dostaje PKO.
 - **Rozliczenie**: jedna lista przelewów (kwota, rachunek, tytuł do skopiowania) dla
-  wszystkich nierozliczonych dochodów. Przycisk „Rozliczone” oznacza je wszystkie naraz,
-  a najnowsze rozliczenie da się cofnąć.
+  wszystkich nierozliczonych dochodów. Kwoty kopert są liczone od sumy tych dochodów
+  (osobno dla każdego planu) i dopiero ona jest zaokrąglana do pełnych złotych. Przycisk
+  „Rozliczone” oznacza je wszystkie naraz, a najnowsze rozliczenie da się cofnąć.
 - **Majątek**: salda PKO, Gotówki, XTB i Obligacji, ich suma i wykres w czasie. Salda XTB
   i Obligacji rosną same o rozliczone przelewy, a wpisane saldo faktyczne pokazuje zysk albo
   stratę. Salda PKO i Gotówki wpisujesz ręcznie.
@@ -92,6 +93,12 @@ docker compose up -d --build
 
 Zmiana proporcji to nowy plan z datą obowiązywania (w **Ustawieniach**). Zmienia podział
 nierozliczonych dochodów od tej daty. Rozliczone dochody zachowują swój podział.
+
+Podział nierozliczonego dochodu na liście **Dochody** to podgląd. Przy rozliczeniu kwoty
+przelewów są rozdzielane z powrotem na dochody w pełnych złotych (złotówkę z zaokrąglenia
+dostaje dochód z największą resztą, a przy remisie wcześniejszy), więc podział dochodu może
+zmienić się o 1 zł, a sumy kopert w miesiącu zgadzają się z przelewami. Przykład: dwa dochody
+po 174 zł to przelew 87 zł na Wakacje (a nie 2 × 44 zł), rozdzielony na 44 i 43 zł.
 
 ## Praca deweloperska w `.venv`
 
