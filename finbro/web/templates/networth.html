@@ -10,18 +10,20 @@
   Zapisano saldo {{ recorded.entry.account.label }} na {{ recorded.entry.date.isoformat() }}: {{ recorded.entry.amount|money }}.
   {% if recorded.difference is not none %}
     Różnica względem wyliczenia: <strong id="difference">{{ recorded.difference|money(plus=True) }}</strong>
-    ({{ "zysk" if recorded.difference.grosze > 0 else ("strata" if recorded.difference.grosze < 0 else "bez zmian") }}).
+    {% if recorded.entry.account.invested %}({{ "zysk" if recorded.difference.grosze > 0 else ("strata" if recorded.difference.grosze < 0 else "bez zmian") }}).
+    {% else %}({{ "dopłata" if recorded.difference.grosze > 0 else ("wypłata" if recorded.difference.grosze < 0 else "bez zmian") }}).
+    {% endif %}
   {% endif %}
 </div>
 {% endif %}
 
 {% if overview.is_empty %}
 <div class="notice warn" id="start">
-  Wpisz salda początkowe PKO, Gotówki, XTB i Obligacji. Później salda XTB i Obligacji będą rosły
-  same o rozliczone przelewy, a salda PKO i Gotówki aktualizujesz ręcznie.
+  Wpisz salda początkowe PKO, Gotówki, Funduszu wakacyjnego, XTB i Obligacji. Później salda Funduszu
+  wakacyjnego, XTB i Obligacji będą rosły same o rozliczone przelewy, a salda PKO i Gotówki aktualizujesz ręcznie.
 </div>
 {% else %}
-<div class="cards">
+<div class="cards cards-even">
   <div class="card hero total"><div class="label">Majątek razem</div><div class="value" id="total">{{ overview.current.total|money }}</div>
     <div class="sub">aktualizacja {{ overview.last_update.isoformat() }}</div></div>
   {% for a in accounts %}
@@ -41,7 +43,7 @@
     <label class="field"><span>Saldo</span><input type="text" class="amount" name="amount" value="{{ form.amount }}" inputmode="decimal" required size="12" placeholder="0,00"></label>
     <button type="submit">Zapisz saldo</button>
   </div>
-  <p class="muted">Saldo XTB i Obligacji pokaże różnicę względem wyliczenia (zysk lub strata). Wpis z tego samego dnia zastępuje poprzedni.</p>
+  <p class="muted">Saldo XTB i Obligacji pokaże różnicę względem wyliczenia (zysk lub strata), a saldo Funduszu wakacyjnego dopłatę lub wypłatę. Saldo z dnia rozliczenia podaj już po jego przelewie. Wpis z tego samego dnia zastępuje poprzedni.</p>
 </form>
 
 {% if overview.timeline %}
@@ -52,12 +54,15 @@
   document.addEventListener("DOMContentLoaded", function () {
     if (typeof Chart === "undefined") { return; }
     const data = JSON.parse(document.getElementById("chart-data").textContent);
-    const css = getComputedStyle(document.documentElement);
-    const token = (name) => css.getPropertyValue(name).trim();
     const zl = new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" });
     const zlShort = new Intl.NumberFormat("pl-PL", { notation: "compact", maximumFractionDigits: 1 });
     const canvas = document.getElementById("networth-chart");
     const ctx = canvas.getContext("2d");
+    let chart = null;
+    function draw() {
+    if (chart) { chart.destroy(); }
+    const css = getComputedStyle(document.documentElement);
+    const token = (name) => css.getPropertyValue(name).trim();
     const fill = ctx.createLinearGradient(0, 0, 0, canvas.parentElement.clientHeight);
     const rgba = (hex, alpha) => {
       const n = parseInt(hex.slice(1), 16);
@@ -67,7 +72,7 @@
     fill.addColorStop(1, rgba(token("--accent"), 0));
     Chart.defaults.color = token("--muted");
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
-    new Chart(canvas, {
+    chart = new Chart(canvas, {
       type: "line",
       data: { labels: data.labels, datasets: [{
         label: "Majątek", data: data.totals, borderColor: token("--accent"), borderWidth: 2,
@@ -89,6 +94,9 @@
         },
       },
     });
+    }
+    draw();
+    document.addEventListener("finbro-theme", draw);  // kolory wykresu pochodzą z tokenów trybu
   });
 </script>
 {% endif %}

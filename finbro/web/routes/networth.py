@@ -1,4 +1,4 @@
-"""Widok Majątek: salda PKO, Gotówki, XTB i Obligacji, suma, wpis salda faktycznego i wykres."""
+"""Widok Majątek: salda PKO, Gotówki, Funduszu wakacyjnego, XTB i Obligacji, suma, wpis salda faktycznego i wykres."""
 
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def record_balance(
 ) -> Response:
     try:
         if account not in Account.__members__:
-            raise NetWorthError("Saldo można wpisać tylko dla PKO, Gotówki, XTB i Obligacji.")
+            raise NetWorthError("Saldo można wpisać tylko dla PKO, Gotówki, Funduszu wakacyjnego, XTB i Obligacji.")
         view = NetWorthService(session).record(Account(account), parse_date(date_), parse_money(amount))
     except (FormError, NetWorthError) as exc:
         session.rollback()

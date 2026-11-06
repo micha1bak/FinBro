@@ -42,7 +42,7 @@ Podział nierozliczonego dochodu liczymy w locie z planu obowiązującego w jego
 *Alternatywa:* zapisywać podział przy każdym wpisie. Odrzucona: zmiana planu wymagałaby przeliczania zapisanych wierszy.
 
 ### D3. Stałe koperty w kodzie
-Koperty PKO, Wakacje, XTB i Obligacje to wyliczenie w `domain` (nazwa, kolejność, czy jest przelewem). Konta majątku to osobne wyliczenie: PKO, Gotówka, XTB i Obligacje, z informacją, czy saldo jest tylko ręczne (PKO, Gotówka) i z której koperty rosną rozliczeniami (XTB, Obligacje). Plan ma stałe kolumny zamiast tabeli udziałów.
+Koperty PKO, Wakacje, XTB i Obligacje to wyliczenie w `domain` (nazwa, kolejność, czy jest przelewem). Konta majątku to osobne wyliczenie: PKO, Gotówka, Fundusz wakacyjny, XTB i Obligacje, z informacją, czy saldo jest tylko ręczne (PKO, Gotówka) i z której koperty rosną rozliczeniami (Fundusz wakacyjny z koperty Wakacje, XTB, Obligacje). Plan ma stałe kolumny zamiast tabeli udziałów.
 *Alternatywa:* koperty jako tabela edytowalna w ustawieniach. Odrzucona: arkusz od lat ma te same koperty, a stała lista upraszcza formularze, walidację i testy. Nowa koperta to mała zmiana kodu i migracja.
 
 ### D4. Zaokrąglenie jak w arkuszu
@@ -55,7 +55,7 @@ Formularz „Rozliczone” wysyła listę id dochodów z wyświetlonej listy. Se
 Cofnięcie usuwa `settlement` (kaskadowo linie i `income_share`) i zeruje `settlement_id` jego dochodów. Ograniczenie do najnowszego eliminuje przypadki, w których starsze rozliczenie byłoby wliczone w późniejsze salda.
 
 ### D7. Majątek jako czysta funkcja
-`networth.balances(entries, settlement_lines, day)` zwraca saldo każdego konta na dzień według `specs/net-worth`. Oś czasu do wykresu to zbiór dni wpisów sald i rozliczeń, a dla każdego dnia suma sald. Różnica przy wpisie salda faktycznego to wpis minus saldo wyliczone na ten dzień bez tego wpisu. Wykres: Chart.js (już dołączony do repozytorium), linia sumy majątku.
+`networth.balances(entries, settlement_lines, day)` zwraca saldo każdego konta na dzień według `specs/net-worth`. Oś czasu do wykresu to zbiór dni wpisów sald i rozliczeń, a dla każdego dnia suma sald. Różnica przy wpisie salda faktycznego to wpis minus saldo wyliczone na ten dzień bez tego wpisu. Wykres: Chart.js (już dołączony do repozytorium), linia sumy majątku. Niczego z tego nie zapisujemy, więc wpis salda z datą w przeszłości wystarcza, żeby poprawić historię: punkty wykresu i różnice liczą się od nowa. Dzięki temu dołączenie konta do majątku nie wymaga przeliczania danych.
 
 ### D8. Własny widok ustawień zamiast SQLAdmin
 Ustawienia to jeden formularz: plan podziału (udziały w procentach i data obowiązywania, lista dotychczasowych planów) oraz rachunki docelowe kopert. SQLAdmin i `itsdangerous` znikają z zależności. `python-multipart` zostaje, bo FastAPI potrzebuje go do formularzy.

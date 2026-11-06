@@ -1,8 +1,8 @@
-"""Majątek (D7): salda kont PKO, Gotówka, XTB i Obligacje z sald faktycznych i rozliczonych przelewów.
+"""Majątek (D7): salda kont PKO, Gotówka, Fundusz wakacyjny, XTB i Obligacje z sald faktycznych i rozliczonych przelewów.
 
-XTB i Obligacje: ostatnie saldo faktyczne z danego dnia lub wcześniejsze plus rozliczenia
-z datą późniejszą niż to saldo, a nie późniejszą niż dany dzień. PKO i Gotówka: tylko saldo
-faktyczne, bo zmieniają je wydatki, których aplikacja nie zna. Wakacje nie wchodzą do majątku.
+Fundusz wakacyjny, XTB i Obligacje: ostatnie saldo faktyczne z danego dnia lub wcześniejsze plus
+rozliczenia z datą późniejszą niż to saldo, a nie późniejszą niż dany dzień. PKO i Gotówka: tylko
+saldo faktyczne, bo zmieniają je wydatki, których aplikacja nie zna.
 """
 
 from __future__ import annotations
@@ -19,21 +19,37 @@ from finbro.domain.money import Money
 class Account(StrEnum):
     PKO = "PKO"
     GOTOWKA = "GOTOWKA"
+    WAKACJE = "WAKACJE"
     XTB = "XTB"
     OBLIGACJE = "OBLIGACJE"
 
     @property
     def label(self) -> str:
-        return {"PKO": "PKO", "GOTOWKA": "Gotówka", "XTB": "XTB", "OBLIGACJE": "Obligacje"}[self.value]
+        return {
+            "PKO": "PKO",
+            "GOTOWKA": "Gotówka",
+            "WAKACJE": "Fundusz wakacyjny",
+            "XTB": "XTB",
+            "OBLIGACJE": "Obligacje",
+        }[self.value]
 
     @property
     def envelope(self) -> Envelope | None:
         """Koperta, której rozliczenia zwiększają saldo; ``None`` dla kont tylko ręcznych."""
-        return {Account.XTB: Envelope.XTB, Account.OBLIGACJE: Envelope.OBLIGACJE}.get(self)
+        return {
+            Account.WAKACJE: Envelope.WAKACJE,
+            Account.XTB: Envelope.XTB,
+            Account.OBLIGACJE: Envelope.OBLIGACJE,
+        }.get(self)
 
     @property
     def manual_only(self) -> bool:
         return self.envelope is None
+
+    @property
+    def invested(self) -> bool:
+        """Czy różnica salda to zysk lub strata; w funduszu wakacyjnym to wypłaty i dopłaty."""
+        return self in (Account.XTB, Account.OBLIGACJE)
 
 
 FED_ENVELOPES = frozenset(a.envelope for a in Account if a.envelope is not None)

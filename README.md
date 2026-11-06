@@ -9,9 +9,11 @@ Lokalna, jednoużytkownikowa aplikacja zastępująca arkusz finansów osobistych
   wszystkich nierozliczonych dochodów. Kwoty kopert są liczone od sumy tych dochodów
   (osobno dla każdego planu) i dopiero ona jest zaokrąglana do pełnych złotych. Przycisk
   „Rozliczone” oznacza je wszystkie naraz, a najnowsze rozliczenie da się cofnąć.
-- **Majątek**: salda PKO, Gotówki, XTB i Obligacji, ich suma i wykres w czasie. Salda XTB
-  i Obligacji rosną same o rozliczone przelewy, a wpisane saldo faktyczne pokazuje zysk albo
-  stratę. Salda PKO i Gotówki wpisujesz ręcznie.
+- **Majątek**: salda PKO, Gotówki, Funduszu wakacyjnego, XTB i Obligacji, ich suma i wykres
+  w czasie. Salda Funduszu wakacyjnego, XTB i Obligacji rosną same o rozliczone przelewy,
+  a wpisane saldo faktyczne pokazuje zysk albo stratę (w funduszu: dopłatę albo wypłatę).
+  Salda PKO i Gotówki wpisujesz ręcznie. Saldo można wpisać też z datą w przeszłości:
+  wykres i różnice liczą się na bieżąco, więc od razu uwzględniają taki wpis.
 - **Ustawienia**: rachunki docelowe kopert i zmiana planu podziału od wybranej daty.
 
 Aplikacja działa wyłącznie na Twoim komputerze. Baza i aplikacja są osiągalne tylko
@@ -86,7 +88,7 @@ docker compose up -d --build
 
 1. **Ustawienia**: wpisz rachunki docelowe Wakacji, XTB i Obligacji. Bez nich lista
    przelewów pokazuje kwoty z ostrzeżeniem o brakującym rachunku.
-2. **Majątek**: wpisz salda początkowe PKO, Gotówki, XTB i Obligacji (stan po ostatnich
+2. **Majątek**: wpisz salda początkowe PKO, Gotówki, Funduszu wakacyjnego, XTB i Obligacji (stan po ostatnich
    wykonanych przelewach). Rozliczenie z tego samego dnia co saldo nie jest do niego doliczane.
 3. **Dochody**: wpisuj kolejne dochody. Gdy wykonasz przelewy z widoku **Rozliczenie**,
    kliknij „Rozliczone”.

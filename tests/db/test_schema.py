@@ -32,7 +32,7 @@ def test_one_balance_per_account_and_day(db_session):
 @pytest.mark.parametrize(
     "row, constraint",
     [
-        (BalanceEntry(account="WAKACJE", date=date(2026, 10, 12), amount=100), "ck_balance_entry_account"),
+        (BalanceEntry(account="REVOLUT", date=date(2026, 10, 12), amount=100), "ck_balance_entry_account"),
         (BalanceEntry(account="KARTA", date=date(2026, 10, 12), amount=100), "ck_balance_entry_account"),
         (BalanceEntry(account="XTB", date=date(2026, 10, 12), amount=-1), "ck_balance_entry_amount_non_negative"),
         (EnvelopeAccount(envelope="PKO", target_account="00 0000"), "ck_envelope_account_envelope"),

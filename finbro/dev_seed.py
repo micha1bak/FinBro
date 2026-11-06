@@ -35,6 +35,7 @@ DEV_DATABASE_SUFFIX = "_dev"
 SALARY_DAY = 10
 SETTLEMENT_DAY = 12
 BALANCE_DAY = 28
+VACATION_MONTH = 7
 
 SALARY_SOURCE = "Wynagrodzenie – Przykładowa Firma sp. z o.o."
 SIDE_SOURCES = ("Zlecenie – strona internetowa", "Faktura – konsultacje", "Sprzedaż na OLX", "Zwrot za wspólny wyjazd")
@@ -114,6 +115,7 @@ def seed(session: Session, today: date, months: int = 12, rng: random.Random | N
     for account, amount in (
         (Account.PKO, zl(rng, 9000, 14000)),
         (Account.GOTOWKA, zl(rng, 300, 1200)),
+        (Account.WAKACJE, zl(rng, 2000, 6000, 100)),
         (Account.XTB, zl(rng, 12000, 18000, 100)),
         (Account.OBLIGACJE, zl(rng, 18000, 25000, 100)),
     ):
@@ -130,6 +132,10 @@ def seed(session: Session, today: date, months: int = 12, rng: random.Random | N
         if day.day == BALANCE_DAY:
             net_worth.record(Account.PKO, day, zl(rng, 8000, 20000))
             net_worth.record(Account.GOTOWKA, day, zl(rng, 200, 1500))
+            if day.month == VACATION_MONTH:
+                # Wyjazd: fundusz wakacyjny spada poniżej wyliczenia z przelewów.
+                computed = balance(Account.WAKACJE, net_worth.entries(), net_worth.contributions(), day) or Money.zero()
+                net_worth.record(Account.WAKACJE, day, Money(round(computed.grosze * rng.uniform(0.3, 0.5))))
             if day.month % 3 == 0:
                 # Saldo faktyczne inwestycji: wyliczone z wpłat razy zysk albo strata rynku.
                 entries, contributions = net_worth.entries(), net_worth.contributions()

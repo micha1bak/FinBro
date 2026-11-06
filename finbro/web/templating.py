@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
@@ -10,6 +11,14 @@ from finbro.domain.money import Money
 
 WEB_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=WEB_DIR / "templates")
+
+
+def content_version(*paths: Path) -> str:
+    """Skrót treści plików do adresu: po zmianie pliku przeglądarka nie użyje starej kopii z pamięci."""
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(path.read_bytes())
+    return digest.hexdigest()[:10]
 
 
 def money_filter(value: Money | int | None, plus: bool = False, currency: bool = True) -> str:
@@ -28,3 +37,4 @@ def plural_filter(n: int, one: str, few: str, many: str) -> str:
 
 templates.env.filters["money"] = money_filter
 templates.env.filters["plural"] = plural_filter
+templates.env.globals["asset_version"] = content_version(WEB_DIR / "static" / "finbro.css", WEB_DIR / "static" / "theme.js")

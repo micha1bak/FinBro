@@ -36,17 +36,17 @@ def test_totals_and_chart_data(client, db_session):
     networth.record(Account.OBLIGACJE, date(2026, 10, 12), Money.parse("1088,25"))
     settle_two_incomes(db_session)
     page = client.get("/networth").text
-    assert value(page, "total") == f"5932,25{NBSP}zł"
-    assert "Wakacje" not in page.split('class="cards"')[1].split("</form>")[0].split("<form")[0]
+    assert value(page, "total") == f"6576,25{NBSP}zł"
+    assert value(page, "balance-WAKACJE") == f"644,00{NBSP}zł"
     chart = json.loads(page.split('id="chart-data">')[1].split("</script>")[0])
-    assert chart == {"labels": ["2026-10-12", "2026-10-19"], "totals": [5288.25, 5932.25]}
+    assert chart == {"labels": ["2026-10-12", "2026-10-19"], "totals": [5288.25, 6576.25]}
 
 
 def test_invalid_balance(client):
     response = client.post("/networth/balance", data={"account": "XTB", "date": "2026-11-01", "amount": "-5"})
     assert response.status_code == 400 and "ujemne" in response.text
-    response = client.post("/networth/balance", data={"account": "WAKACJE", "date": "2026-11-01", "amount": "5"})
-    assert response.status_code == 400 and "PKO, Gotówki, XTB i Obligacji" in response.text
+    response = client.post("/networth/balance", data={"account": "REVOLUT", "date": "2026-11-01", "amount": "5"})
+    assert response.status_code == 400 and "PKO, Gotówki, Funduszu wakacyjnego, XTB i Obligacji" in response.text
     response = client.post("/networth/balance", data={"account": "XTB", "date": "", "amount": "5"})
     assert response.status_code == 400 and "RRRR-MM-DD" in response.text
 
@@ -62,6 +62,26 @@ def test_cash_balance_in_net_worth(client, db_session):
                            follow_redirects=False)
     page = client.get(response.headers["location"]).text
     assert value(page, "balance-GOTOWKA") == f"250,00{NBSP}zł"
-    assert value(page, "total") == f"6182,25{NBSP}zł"
+    assert value(page, "total") == f"6826,25{NBSP}zł"
     assert 'id="difference"' not in page  # saldo tylko ręczne, bez różnicy
     assert '<option value="GOTOWKA">Gotówka</option>' in page
+
+
+def test_vacation_fund_backdated_entries_fix_history(client, db_session):
+    networth = NetWorthService(db_session)
+    networth.record(Account.PKO, date(2026, 10, 12), Money.parse("3000"))
+    settle_two_incomes(db_session)  # 644 zł na Wakacje 2026-10-19
+    networth.record(Account.PKO, date(2026, 10, 19), Money.parse("3000"))
+
+    client.post("/networth/balance", data={"account": "WAKACJE", "date": "2026-10-12", "amount": "500,00"})
+    response = client.post("/networth/balance", data={"account": "WAKACJE", "date": "2026-10-19", "amount": "1044,00"},
+                           follow_redirects=False)
+    page = client.get(response.headers["location"]).text
+
+    assert "Fundusz wakacyjny" in page and '<option value="WAKACJE">Fundusz wakacyjny</option>' in page
+    assert value(page, "difference") == f"-100,00{NBSP}zł"
+    notice = page.split('id="recorded">')[1].split("</div>")[0]
+    assert "wypłata" in notice and "strata" not in notice
+    assert value(page, "balance-WAKACJE") == f"1044,00{NBSP}zł"
+    chart = json.loads(page.split('id="chart-data">')[1].split("</script>")[0])
+    assert chart == {"labels": ["2026-10-12", "2026-10-19"], "totals": [3500.0, 4688.0]}

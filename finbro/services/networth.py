@@ -31,7 +31,7 @@ class NetWorthError(ValueError):
 @dataclass(frozen=True)
 class EntryView:
     entry: BalanceEntry
-    difference: Money | None  # tylko XTB i Obligacje (konta wyliczane)
+    difference: Money | None  # tylko konta wyliczane (Fundusz wakacyjny, XTB, Obligacje)
 
 
 @dataclass(frozen=True)

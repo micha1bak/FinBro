@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}FinBro{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='finbro.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='finbro.css') }}?v={{ asset_version }}">
+  <script src="{{ url_for('static', path='theme.js') }}?v={{ asset_version }}"></script>
   {% block head %}{% endblock %}
 </head>
 <body>
@@ -13,13 +14,14 @@
   {% macro nav_link(href, label, active) %}<a href="{{ href }}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>{% endmacro %}
   <header class="topbar">
     <div class="topbar-inner">
-      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">F</span><span class="brand-name">FinBro</span></a>
+      <a class="brand" href="/">FinBro</a>
       <nav aria-label="Widoki">
         {{ nav_link("/", "Dochody", path == "/" or path.startswith("/incomes")) }}
         {{ nav_link("/settlement", "Rozliczenie", path.startswith("/settlement")) }}
         {{ nav_link("/networth", "Majątek", path.startswith("/networth")) }}
         {{ nav_link("/settings", "Ustawienia", path.startswith("/settings")) }}
       </nav>
+      <button type="button" class="theme-toggle" id="theme-toggle"><span class="theme-icon" aria-hidden="true"></span><span class="theme-label"></span></button>
     </div>
   </header>
   <main>

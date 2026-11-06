@@ -35,11 +35,6 @@
       {% for f in forms %}<span data-form="{{ f.value }}">{{ f.label }}: <strong>{{ summary.by_form[f]|money }}</strong></span>{% if not loop.last %} · {% endif %}{% endfor %}
     </p>
   </div>
-  <div class="card">
-    <div class="label">Do rozliczenia</div>
-    <div class="value">{{ open|length }} z {{ summary.incomes|length }}</div>
-    <div class="sub">{% if open %}<a href="/settlement">Przejdź do przelewów →</a>{% else %}wszystkie rozliczone{% endif %}</div>
-  </div>
 </div>
 
 <div class="table-wrap">
